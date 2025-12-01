@@ -193,17 +193,6 @@ const Footer = () => {
             <Link to="#" className="hover:text-white transition-colors">
               Terms of Service
             </Link>
-            <span className="flex items-center gap-1">
-              Designed by{" "}
-              <a
-                href="https://www.saayami.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500 hover:opacity-80 font-bold"
-              >
-                SAAYAMI
-              </a>
-            </span>
           </div>
         </div>
       </div>
