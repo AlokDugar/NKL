@@ -185,7 +185,10 @@ const Footer = () => {
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 text-xs text-gray-500 border-t border-white/5">
-          <p>© 2025 Nepal Kabaddi League. All Rights Reserved.</p>
+          <p>
+            © {new Date().getFullYear()} Nepal Kabaddi League. All Rights
+            Reserved.
+          </p>
           <div className="flex items-center gap-6 mt-4 md:mt-0">
             <Link to="#" className="hover:text-white transition-colors">
               Privacy Policy
