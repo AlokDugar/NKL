@@ -1,15 +1,15 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
-import { motion } from 'framer-motion';
-import { ArrowRight, Calendar, Clock } from 'lucide-react';
-import { NEWS } from '../../data/mockData';
+import React from "react";
+import { Link } from "react-router-dom";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination } from "swiper/modules";
+import { motion } from "framer-motion";
+import { ArrowRight, Calendar, Clock } from "lucide-react";
+import { NEWS } from "../../data/mockData";
 
 // Import Swiper styles
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 const NewsSection = () => {
   return (
@@ -21,32 +21,38 @@ const NewsSection = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div>
-            <motion.span 
+            <motion.span
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500 font-bold uppercase tracking-widest text-sm block mb-2"
             >
               Latest Updates
             </motion.span>
-            <motion.h2 
+            <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter"
             >
-              Breaking <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-600">News</span>
+              Breaking{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-600">
+                News
+              </span>
             </motion.h2>
           </div>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
           >
-            <Link 
+            <Link
               to="/news"
               className="group flex items-center gap-2 text-white font-bold uppercase tracking-wider hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-red-500 hover:to-blue-500 transition-all"
             >
               View All News
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform text-red-500 group-hover:text-blue-500" />
+              <ArrowRight
+                size={20}
+                className="group-hover:translate-x-1 transition-transform text-red-500 group-hover:text-blue-500"
+              />
             </Link>
           </motion.div>
         </div>
@@ -69,7 +75,7 @@ const NewsSection = () => {
         >
           {NEWS.map((item, index) => (
             <SwiperSlide key={item.id}>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -79,9 +85,9 @@ const NewsSection = () => {
                 <div className="absolute inset-0 rounded-xl p-[1px] bg-gradient-to-r from-red-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
                 <div className="aspect-[16/10] overflow-hidden relative rounded-t-xl">
-                  <img 
-                    src={item.image} 
-                    alt={item.title} 
+                  <img
+                    src={item.image}
+                    alt={item.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
@@ -89,7 +95,7 @@ const NewsSection = () => {
                     {item.category}
                   </span>
                 </div>
-                
+
                 <div className="p-6 relative bg-zinc-950 rounded-b-xl h-full">
                   <div className="flex items-center gap-4 text-gray-400 text-xs mb-4">
                     <span className="flex items-center gap-1">
@@ -97,18 +103,23 @@ const NewsSection = () => {
                       {item.date}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock size={14} className="text-blue-500" />
-                      2 min read
+                      <Clock size={14} className="text-blue-500" />2 min read
                     </span>
                   </div>
-                  
+
                   <h3 className="text-xl font-bold text-white mb-4 line-clamp-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-red-500 group-hover:to-blue-500 transition-all leading-tight">
                     {item.title}
                   </h3>
-                  
-                  <Link to="/news" className="inline-flex items-center gap-2 text-sm font-bold text-white/70 hover:text-white uppercase tracking-wider transition-colors group/link">
+
+                  <Link
+                    to="/news"
+                    className="inline-flex items-center gap-2 text-sm font-bold text-white/70 hover:text-white uppercase tracking-wider transition-colors group/link"
+                  >
                     Read More
-                    <ArrowRight size={16} className="group-hover/link:translate-x-1 transition-transform text-red-500 group-hover/link:text-blue-500" />
+                    <ArrowRight
+                      size={16}
+                      className="group-hover/link:translate-x-1 transition-transform text-red-500 group-hover/link:text-blue-500"
+                    />
                   </Link>
                 </div>
               </motion.div>

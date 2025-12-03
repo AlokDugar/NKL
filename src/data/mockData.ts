@@ -345,6 +345,38 @@ export const STANDINGS = [
   { rank: 6, teamId: "pokhara-lakers", points: 4, played: 10, won: 1, lost: 8, draw: 1 },
 ];
 
+export const SEASON_DATA = {
+  season: "12",
+  topRaider: {
+    name: "GHANSHYAM ROKA MAGAR",
+    points: 117,
+    image: "https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/players/ghanshyam-roka/photo/ghanshyam-roka2025-01-13-140204.png",
+  },
+  topDefender: {
+    name: "SAHARAT PHETCHUI",
+    points: 50,
+    image: "https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/players/saharat/photo/saharat2025-01-13-104146.png",
+  },
+  raidStats: [
+    { label: "Raid Points", value: "4834", highlight: true },
+    { label: "Super 10s", value: "170" },
+    { label: "DOD Raids", value: "1018" },
+    { label: "Bonus Points", value: "1275" },
+    { label: "Super Raids", value: "114" },
+  ],
+  tackleStats: [
+    { label: "Tackle Points", value: "2440", highlight: true },
+    { label: "High 5s", value: "102" },
+    { label: "Super Tackles", value: "223" },
+  ],
+  overallStats: [
+    { label: "Tie Breakers", value: "14" },
+    { label: "Matches", value: "117" },
+    { label: "Total Points", value: "8393" },
+    { label: "All Outs", value: "308" },
+  ],
+}
+
 // MATCHES
 export const MATCHES = [
   { 
