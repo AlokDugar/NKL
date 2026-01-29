@@ -1,13 +1,54 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import CountUp from "react-countup";
-import { STANDINGS, TEAMS } from "../../data/mockData";
-import clsx from "clsx";
 import { ArrowRight } from "lucide-react";
 
+interface Game {
+  id: number;
+  match_number: string;
+  winner_id: number;
+  status: number;
+  first_half_start_time: string;
+  second_half_end_time: string;
+  total_points: number;
+  total_score_diff: number;
+  stat: string;
+}
+
+interface Team {
+  id: number;
+  logo: string;
+  name: string;
+  slug: string;
+  primary_color: string;
+  total_points: number;
+  total_score_diff: number;
+  total_matches: number;
+  total_wins: number;
+  total_draws: number;
+  total_losses: number;
+  games: Game[];
+  previous_game?: Game | null;
+  next_game?: Game | null;
+}
+
 const StandingsSection = () => {
-  const getTeam = (id: string) => TEAMS.find((t) => t.id === id);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("https://api-v1.nepalkabaddileague.com/api/standings")
+      .then((res) => res.json())
+      .then((data) => {
+        // Sort by total points descending
+        const sorted = (data.data || []).sort(
+          (a: Team, b: Team) => b.total_points - a.total_points
+        );
+        setTeams(sorted);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <section className="py-20 bg-zinc-900 relative overflow-hidden">
@@ -31,7 +72,7 @@ const StandingsSection = () => {
               className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter"
             >
               League{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-600">
+              <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-600 pr-1">
                 Standings
               </span>
             </motion.h2>
@@ -69,22 +110,30 @@ const StandingsSection = () => {
                 </tr>
               </thead>
               <tbody>
-                {STANDINGS.map((standing, index) => {
-                  const team = getTeam(standing.teamId);
-                  if (!team) return null;
-
-                  return (
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-white">
+                      Loading standings...
+                    </td>
+                  </tr>
+                ) : teams.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-white">
+                      No data found
+                    </td>
+                  </tr>
+                ) : (
+                  teams.map((team, index) => (
                     <motion.tr
-                      key={standing.teamId}
+                      key={team.id}
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
+                      transition={{ delay: index * 0.05 }}
                       className="border-b border-white/5 hover:bg-gradient-to-r hover:from-red-900/10 hover:to-blue-900/10 transition-colors group"
                     >
                       <td className="p-6">
                         <span
-                          className={clsx(
-                            "w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm shadow-lg",
+                          className={`w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm shadow-lg ${
                             index === 0
                               ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-black"
                               : index === 1
@@ -92,9 +141,9 @@ const StandingsSection = () => {
                               : index === 2
                               ? "bg-gradient-to-br from-orange-600 to-orange-800 text-white"
                               : "bg-white/10 text-white"
-                          )}
+                          }`}
                         >
-                          {standing.rank}
+                          {index + 1}
                         </span>
                       </td>
                       <td className="p-6">
@@ -110,29 +159,29 @@ const StandingsSection = () => {
                         </div>
                       </td>
                       <td className="p-6 text-center text-gray-300 font-medium">
-                        {standing.played}
+                        {team.total_matches}
                       </td>
                       <td className="p-6 text-center text-green-500 font-bold">
-                        {standing.won}
+                        {team.total_wins}
                       </td>
                       <td className="p-6 text-center text-red-500 font-bold">
-                        {standing.lost}
+                        {team.total_losses}
                       </td>
                       <td className="p-6 text-center text-gray-300 font-medium">
-                        {standing.draw}
+                        {team.total_draws}
                       </td>
                       <td className="p-6 text-center">
                         <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
                           <CountUp
-                            end={standing.points}
+                            end={team.total_points}
                             duration={2}
                             enableScrollSpy
                           />
                         </span>
                       </td>
                     </motion.tr>
-                  );
-                })}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

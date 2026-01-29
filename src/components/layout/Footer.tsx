@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Facebook,
@@ -9,9 +9,29 @@ import {
   MapPin,
   Phone,
 } from "lucide-react";
-import { PARTNERS } from "../../data/mockData";
+
+interface Partner {
+  id: number;
+  name: string;
+  logo: string;
+  link: string;
+  category: {
+    id: number;
+    name: string;
+  };
+}
 
 const Footer = () => {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("https://api-v1.nepalkabaddileague.com/api/partners")
+      .then((res) => res.json())
+      .then((data) => setPartners(data.data || []))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <footer className="bg-black text-white pt-16 pb-8 border-t border-white/10 relative overflow-hidden">
       {/* Gradient Top Border */}
@@ -23,23 +43,31 @@ const Footer = () => {
           <h3 className="text-center text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500 font-bold uppercase tracking-widest mb-8 text-sm">
             Official Partners
           </h3>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 transition-all duration-500">
-            {PARTNERS.map((partner) => (
-              <div
-                key={partner.name}
-                className="flex flex-col items-center gap-2"
-              >
-                <span className="text-xs text-gray-500 uppercase tracking-wider">
-                  {partner.role}
-                </span>
-                <img
-                  src={partner.logo}
-                  alt={partner.name}
-                  className="h-12 md:h-16 w-auto object-contain"
-                />
-              </div>
-            ))}
-          </div>
+
+          {loading ? (
+            <div className="text-center text-gray-400">Loading partners...</div>
+          ) : (
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 transition-all duration-500">
+              {partners.map((partner) => (
+                <a
+                  key={partner.id}
+                  href={partner.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-2 hover:scale-105 transition-transform"
+                >
+                  <span className="text-xs text-gray-500 uppercase tracking-wider">
+                    {partner.category.name}
+                  </span>
+                  <img
+                    src={partner.logo}
+                    alt={partner.name}
+                    className="h-12 md:h-16 w-auto object-contain"
+                  />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12 border-b border-white/10 pb-12">
@@ -56,42 +84,18 @@ const Footer = () => {
               across the nation.
             </p>
             <div className="flex gap-4">
-              <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gradient-to-r hover:from-red-600 hover:to-blue-600 transition-all text-white group"
-              >
-                <Facebook
-                  size={18}
-                  className="group-hover:scale-110 transition-transform"
-                />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gradient-to-r hover:from-red-600 hover:to-blue-600 transition-all text-white group"
-              >
-                <Instagram
-                  size={18}
-                  className="group-hover:scale-110 transition-transform"
-                />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gradient-to-r hover:from-red-600 hover:to-blue-600 transition-all text-white group"
-              >
-                <Twitter
-                  size={18}
-                  className="group-hover:scale-110 transition-transform"
-                />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gradient-to-r hover:from-red-600 hover:to-blue-600 transition-all text-white group"
-              >
-                <Youtube
-                  size={18}
-                  className="group-hover:scale-110 transition-transform"
-                />
-              </a>
+              {[Facebook, Instagram, Twitter, Youtube].map((Icon, idx) => (
+                <a
+                  key={idx}
+                  href="#"
+                  className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gradient-to-r hover:from-red-600 hover:to-blue-600 transition-all text-white group"
+                >
+                  <Icon
+                    size={18}
+                    className="group-hover:scale-110 transition-transform"
+                  />
+                </a>
+              ))}
             </div>
           </div>
 

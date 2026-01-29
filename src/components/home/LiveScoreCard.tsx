@@ -9,9 +9,9 @@ import {
   Star,
   Timer,
   Activity,
-  X,
   Minimize2,
   Maximize2,
+  Play,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -45,7 +45,6 @@ const LiveScoreCard = () => {
   const [timeRemaining, setTimeRemaining] = useState(1200); // 20 minutes in seconds
   const [lastEvent, setLastEvent] = useState<GameEvent | null>(null);
   const [showAnimation, setShowAnimation] = useState<EventType | null>(null);
-  const [isVisible, setIsVisible] = useState(true);
   const [isMinimized, setIsMinimized] = useState(() => {
     const saved = localStorage.getItem("liveScoreMinimized");
     return saved ? JSON.parse(saved) : false;
@@ -55,7 +54,14 @@ const LiveScoreCard = () => {
   );
   const [raidingTeam, setRaidingTeam] = useState<"A" | "B">("A");
 
+  // YouTube live stream URL - update this with the actual stream URL
+  const liveStreamUrl = "https://www.youtube.com/watch?v=YOUR_VIDEO_ID";
+
   const matchEnded = timeRemaining === 0;
+
+  const handleWatchLive = () => {
+    window.open(liveStreamUrl, "_blank", "noopener,noreferrer");
+  };
 
   // Save minimized state
   useEffect(() => {
@@ -105,11 +111,9 @@ const LiveScoreCard = () => {
       "ALL_OUT",
       "DO_OR_DIE",
     ];
-    // Weighted random selection
     const rand = Math.random();
     let type: EventType = "RAID_POINT";
 
-    // Logic to determine event based on current state (simplified)
     if (activePlayersA <= 3 && raidingTeam === "B" && rand > 0.8)
       type = "SUPER_TACKLE";
     else if (activePlayersB <= 3 && raidingTeam === "A" && rand > 0.8)
@@ -123,37 +127,35 @@ const LiveScoreCard = () => {
     else if (rand > 0.4) type = "TACKLE_POINT";
     else type = "RAID_POINT";
 
-    const isTeamA = raidingTeam === "A"; // Current raider is from Team A
+    const isTeamA = raidingTeam === "A";
     let points = 0;
     let description = "";
-    let nextRaiderTeam = raidingTeam === "A" ? "B" : "A"; // Switch turn by default
+    let nextRaiderTeam = raidingTeam === "A" ? "B" : "A";
 
     if (type === "RAID_POINT") {
       points = 1;
       if (isTeamA) {
         setScoreA((s) => s + 1);
         setActivePlayersB((p) => Math.max(0, p - 1));
-        setActivePlayersA((p) => Math.min(7, p + 1)); // Revive
+        setActivePlayersA((p) => Math.min(7, p + 1));
         description = `Raid Point: ${teamA.name}`;
       } else {
         setScoreB((s) => s + 1);
         setActivePlayersA((p) => Math.max(0, p - 1));
-        setActivePlayersB((p) => Math.min(7, p + 1)); // Revive
+        setActivePlayersB((p) => Math.min(7, p + 1));
         description = `Raid Point: ${teamB.name}`;
       }
     } else if (type === "TACKLE_POINT") {
       points = 1;
       if (isTeamA) {
-        // Team A raider tackled
         setScoreB((s) => s + 1);
         setActivePlayersA((p) => Math.max(0, p - 1));
-        setActivePlayersB((p) => Math.min(7, p + 1)); // Revive
+        setActivePlayersB((p) => Math.min(7, p + 1));
         description = `Tackle Point: ${teamB.name}`;
       } else {
-        // Team B raider tackled
         setScoreA((s) => s + 1);
         setActivePlayersB((p) => Math.max(0, p - 1));
-        setActivePlayersA((p) => Math.min(7, p + 1)); // Revive
+        setActivePlayersA((p) => Math.min(7, p + 1));
         description = `Tackle Point: ${teamA.name}`;
       }
     } else if (type === "SUPER_RAID") {
@@ -172,47 +174,32 @@ const LiveScoreCard = () => {
     } else if (type === "SUPER_TACKLE") {
       points = 2;
       if (isTeamA) {
-        // Team A raider super tackled
         setScoreB((s) => s + 2);
         setActivePlayersA((p) => Math.max(0, p - 1));
-        setActivePlayersB((p) => Math.min(7, p + 1)); // Revive 1
+        setActivePlayersB((p) => Math.min(7, p + 1));
         description = `SUPER TACKLE: ${teamB.name}`;
       } else {
         setScoreA((s) => s + 2);
         setActivePlayersB((p) => Math.max(0, p - 1));
-        setActivePlayersA((p) => Math.min(7, p + 1)); // Revive 1
+        setActivePlayersA((p) => Math.min(7, p + 1));
         description = `SUPER TACKLE: ${teamA.name}`;
       }
     } else if (type === "ALL_OUT") {
-      points = 2; // +2 for all out, plus points for remaining players (simplified)
+      points = 2;
       if (isTeamA) {
-        // Team A gets All Out points (Team B wiped)
         setScoreA((s) => s + 2 + activePlayersB);
-        setActivePlayersB(7); // Reset
+        setActivePlayersB(7);
         description = `ALL OUT: ${teamA.name}`;
       } else {
         setScoreB((s) => s + 2 + activePlayersA);
-        setActivePlayersA(7); // Reset
+        setActivePlayersA(7);
         description = `ALL OUT: ${teamB.name}`;
       }
-      // Raider continues? No, usually reset.
     } else if (type === "DO_OR_DIE") {
       description = "DO OR DIE RAID";
-      // No points change immediately, just visual
-      nextRaiderTeam = raidingTeam; // Keep same raider for animation duration
+      nextRaiderTeam = raidingTeam;
     }
 
-    // Check for All Out condition after points update (simplified check)
-    if (activePlayersA <= 0) {
-      setActivePlayersA(7);
-      setScoreB((s) => s + 2);
-    }
-    if (activePlayersB <= 0) {
-      setActivePlayersB(7);
-      setScoreA((s) => s + 2);
-    }
-
-    // Set event for animation
     const newEvent: GameEvent = {
       id: Date.now().toString(),
       type,
@@ -225,7 +212,6 @@ const LiveScoreCard = () => {
     setLastEvent(newEvent);
     setShowAnimation(type);
 
-    // Switch Raider
     setRaidingTeam(nextRaiderTeam as "A" | "B");
     const nextTeamId = nextRaiderTeam === "A" ? teamA.id : teamB.id;
     const teamPlayers = PLAYERS.filter((p) => p.teamId === nextTeamId);
@@ -234,11 +220,8 @@ const LiveScoreCard = () => {
     ] || { name: "Unknown Player" };
     setCurrentRaider(randomPlayer.name);
 
-    // Clear animation after a few seconds
     setTimeout(() => setShowAnimation(null), 3000);
   };
-
-  if (!isVisible) return null;
 
   return (
     <motion.div
@@ -250,24 +233,20 @@ const LiveScoreCard = () => {
       )}
     >
       <div className="bg-black/90 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden shadow-2xl shadow-red-900/20 relative">
-        {/* Controls */}
+        {/* Minimize Control */}
         <div className="absolute top-2 right-2 flex items-center gap-1 z-50">
           <button
-            onClick={() => setIsMinimized(!isMinimized)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMinimized(!isMinimized);
+            }}
             className="text-white/50 hover:text-white p-1 rounded hover:bg-white/10 transition-colors"
           >
             {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
           </button>
-          <button
-            onClick={() => setIsVisible(false)}
-            className="text-white/50 hover:text-white p-1 rounded hover:bg-white/10 transition-colors"
-          >
-            <X size={14} />
-          </button>
         </div>
 
         {isMinimized ? (
-          // Minimized View
           <div className="p-3 flex items-center gap-4 pr-16">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">
@@ -291,32 +270,33 @@ const LiveScoreCard = () => {
             </div>
           </div>
         ) : (
-          // Expanded View
           <>
-            {/* Header: Live + Timer */}
-            <div className="bg-white/5 px-4 py-2 flex justify-between items-center border-b border-white/10">
-              {matchEnded ? (
-                <div className="flex items-center gap-2">
-                  <Trophy size={14} className="text-yellow-500" />
-                  <span className="text-white text-xs font-bold tracking-wider">
-                    FULL TIME
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
-                  </span>
-                  <span className="text-red-500 text-xs font-bold tracking-wider">
-                    LIVE
-                  </span>
-                </div>
-              )}
-
+            {/* Expanded View */}
+            {/* Header */}
+            <div className="bg-white/5 px-4 py-2 flex justify-center items-center border-b border-white/10 relative">
+              <div className="absolute left-4">
+                {matchEnded ? (
+                  <div className="flex items-center gap-2">
+                    <Trophy size={14} className="text-yellow-500" />
+                    <span className="text-white text-xs font-bold tracking-wider">
+                      FULL TIME
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                    </span>
+                    <span className="text-red-500 text-xs font-bold tracking-wider">
+                      LIVE
+                    </span>
+                  </div>
+                )}
+              </div>
               <div
                 className={clsx(
-                  "text-xs font-mono flex items-center gap-1 mr-12",
+                  "text-xs font-mono flex items-center gap-1",
                   matchEnded ? "text-white font-bold" : "text-gray-400"
                 )}
               >
@@ -338,7 +318,6 @@ const LiveScoreCard = () => {
                   <span className="text-[10px] text-gray-300 font-bold uppercase text-center leading-tight h-8 flex items-center justify-center w-full">
                     {teamA.name}
                   </span>
-                  {/* Active Players Dots */}
                   <div className="flex gap-0.5">
                     {[...Array(7)].map((_, i) => (
                       <div
@@ -375,9 +354,23 @@ const LiveScoreCard = () => {
                       {scoreB}
                     </motion.span>
                   </div>
-                  <span className="text-[10px] text-gray-500 uppercase tracking-wider">
-                    {matchEnded ? "Final Score" : "2nd Half"}
-                  </span>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider">
+                      {matchEnded ? "Final Score" : "2nd Half"}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleWatchLive();
+                      }}
+                      className="flex items-center gap-1 px-2 py-0.5 bg-black rounded text-white text-[9px] font-bold uppercase tracking-wide"
+                    >
+                      <div className="w-3 h-3 rounded-full border border-white flex items-center justify-center bg-black">
+                        <Play size={6} fill="white" className="ml-[1px]" />
+                      </div>
+                      <span>Watch</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Team B */}
@@ -390,7 +383,6 @@ const LiveScoreCard = () => {
                   <span className="text-[10px] text-gray-300 font-bold uppercase text-center leading-tight h-8 flex items-center justify-center w-full">
                     {teamB.name}
                   </span>
-                  {/* Active Players Dots */}
                   <div className="flex gap-0.5">
                     {[...Array(7)].map((_, i) => (
                       <div

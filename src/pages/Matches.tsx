@@ -1,37 +1,109 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, MapPin, Clock, Filter, Search } from "lucide-react";
-import { MATCHES, TEAMS } from "../data/mockData";
 import Layout from "../components/layout/Layout";
 import { Link } from "react-router-dom";
 
+/* ---------- Types ---------- */
+interface Team {
+  id: number;
+  name: string;
+  logo: string;
+}
+
+interface MatchDetails {
+  first_team_score?: number;
+  second_team_score?: number;
+  status?: number; // 1 = finished
+}
+
+interface Stadium {
+  name: string;
+}
+
+interface Match {
+  id: number;
+  type: string;
+  date: string;
+  season_id?: number;
+  first_team: Team;
+  second_team: Team;
+  details?: MatchDetails;
+  stadium?: Stadium;
+}
+
+interface Season {
+  id: number;
+  name: string;
+}
+
+/* ---------- Component ---------- */
 const Matches = () => {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [filterStatus, setFilterStatus] = useState<
     "ALL" | "LIVE" | "UPCOMING" | "RECENT"
   >("ALL");
-  const [selectedSeason, setSelectedSeason] = useState("2025");
+  const [selectedSeason, setSelectedSeason] = useState("ALL");
   const [selectedTeam, setSelectedTeam] = useState("ALL");
   const [searchDate, setSearchDate] = useState("");
 
-  const getTeam = (id: string) => TEAMS.find((t) => t.id === id);
+  /* ---------- Fetch Data ---------- */
+  useEffect(() => {
+    Promise.all([
+      fetch("https://api-v1.nepalkabaddileague.com/api/games").then((r) =>
+        r.json()
+      ),
+      fetch("https://api-v1.nepalkabaddileague.com/api/seasons").then((r) =>
+        r.json()
+      ),
+    ])
+      .then(([gamesRes, seasonsRes]) => {
+        // Sort matches by date descending
+        const sortedMatches = (gamesRes.data || []).sort(
+          (a: Match, b: Match) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
 
-  // Filter Logic
-  const filteredMatches = MATCHES.filter((match) => {
-    // Status Filter
-    if (filterStatus === "LIVE" && match.status !== "LIVE") return false;
-    if (filterStatus === "UPCOMING" && match.status !== "Upcoming")
-      return false;
-    if (filterStatus === "RECENT" && match.status !== "FT") return false;
+        setMatches(sortedMatches);
+        setSeasons(seasonsRes.data || []);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-    // Team Filter
+  const getMatchStatus = (match: Match) => {
+    const s1 = Number(match.details?.first_team_score ?? 0);
+    const s2 = Number(match.details?.second_team_score ?? 0);
+
+    if (match.details?.status === 1) return "RECENT";
+    if (s1 !== 0 || s2 !== 0) return "LIVE";
+    return "UPCOMING";
+  };
+
+  const filteredMatches = matches.filter((match) => {
+    const status = getMatchStatus(match);
+
+    // Status filter
+    if (filterStatus !== "ALL" && status !== filterStatus) return false;
+
+    // Season filter
     if (
-      selectedTeam !== "ALL" &&
-      match.team1 !== selectedTeam &&
-      match.team2 !== selectedTeam
+      selectedSeason !== "ALL" &&
+      match.season_id?.toString() !== selectedSeason
     )
       return false;
 
-    // Date Filter
+    // Team filter
+    if (
+      selectedTeam !== "ALL" &&
+      match.first_team.id.toString() !== selectedTeam &&
+      match.second_team.id.toString() !== selectedTeam
+    )
+      return false;
+
+    // Date filter
     if (searchDate && !match.date.includes(searchDate)) return false;
 
     return true;
@@ -41,22 +113,24 @@ const Matches = () => {
     <Layout>
       <div className="pt-24 pb-20 min-h-screen bg-slate-950 text-white">
         <div className="container mx-auto px-4">
+          {/* ---------- Header ---------- */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
-            <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter mb-4">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500">
+            <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tight mb-4">
+              <span className="inline-block pr-2 text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500 [text-shadow:0.06em_0_0_transparent]">
                 Match Schedule
               </span>
             </h1>
-            <div className="h-1 w-24 mx-auto bg-gradient-to-r from-red-500 to-blue-500 transform -skew-x-12" />
+
+            <div className="h-1 w-24 mx-auto bg-gradient-to-r from-red-500 to-blue-500 -skew-x-12" />
           </motion.div>
 
-          {/* Filters Section */}
+          {/* ---------- Filters ---------- */}
           <div className="max-w-4xl mx-auto mb-8 space-y-4">
-            {/* Top Row: Status Tabs */}
+            {/* Status Tabs */}
             <div className="flex justify-center gap-4 border-b border-white/10 pb-4">
               {(["ALL", "LIVE", "UPCOMING", "RECENT"] as const).map(
                 (status) => (
@@ -65,7 +139,7 @@ const Matches = () => {
                     onClick={() => setFilterStatus(status)}
                     className={`px-6 py-2 rounded-full font-bold uppercase tracking-wider text-sm transition-all ${
                       filterStatus === status
-                        ? "bg-red-600 text-white shadow-lg shadow-red-900/20"
+                        ? "bg-red-600 text-white shadow-lg"
                         : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                     }`}
                   >
@@ -75,7 +149,7 @@ const Matches = () => {
               )}
             </div>
 
-            {/* Bottom Row: Advanced Filters */}
+            {/* Advanced Filters */}
             <div className="bg-slate-900/50 p-4 rounded-xl border border-white/10 flex flex-wrap gap-4 items-center justify-between">
               <div className="flex items-center gap-2 text-slate-400 text-sm font-bold uppercase">
                 <Filter size={16} /> Filters:
@@ -88,8 +162,12 @@ const Matches = () => {
                   onChange={(e) => setSelectedSeason(e.target.value)}
                   className="bg-black border border-white/10 rounded px-3 py-2 text-sm font-bold text-white focus:outline-none focus:border-red-500"
                 >
-                  <option value="2025">Season 2025</option>
-                  <option value="2024">Season 2024</option>
+                  <option value="ALL">All Seasons</option>
+                  {seasons.map((season) => (
+                    <option key={season.id} value={season.id}>
+                      {season.name}
+                    </option>
+                  ))}
                 </select>
 
                 {/* Team Select */}
@@ -99,7 +177,14 @@ const Matches = () => {
                   className="bg-black border border-white/10 rounded px-3 py-2 text-sm font-bold text-white focus:outline-none focus:border-red-500"
                 >
                   <option value="ALL">All Teams</option>
-                  {TEAMS.map((team) => (
+                  {[
+                    ...new Map(
+                      matches.flatMap((m) => [
+                        [m.first_team.id, m.first_team],
+                        [m.second_team.id, m.second_team],
+                      ])
+                    ).values(),
+                  ].map((team) => (
                     <option key={team.id} value={team.id}>
                       {team.name}
                     </option>
@@ -114,28 +199,31 @@ const Matches = () => {
                   />
                   <input
                     type="text"
-                    placeholder="Search Date (e.g. Jan 25)"
+                    placeholder="Search Date (YYYY-MM-DD)"
                     value={searchDate}
                     onChange={(e) => setSearchDate(e.target.value)}
-                    className="bg-black border border-white/10 rounded pl-9 pr-3 py-2 text-sm font-bold text-white focus:outline-none focus:border-red-500 w-48"
+                    className="bg-black border border-white/10 rounded pl-9 pr-3 py-2 text-sm font-bold text-white focus:outline-none focus:border-red-500"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Matches List */}
-          <div className="max-w-4xl mx-auto space-y-6">
-            {filteredMatches.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 font-bold uppercase">
-                No matches found matching your criteria
+          {/* ---------- Match List ---------- */}
+          <div className="max-w-4xl mx-auto space-y-8">
+            {loading ? (
+              <div className="text-center py-20 text-slate-400 font-bold">
+                Loading matches...
+              </div>
+            ) : filteredMatches.length === 0 ? (
+              <div className="text-center py-20 text-slate-500 font-bold uppercase">
+                No matches found
               </div>
             ) : (
               filteredMatches.map((match, index) => {
-                const team1 = getTeam(match.team1);
-                const team2 = getTeam(match.team2);
-
-                if (!team1 || !team2) return null;
+                const s1 = Number(match.details?.first_team_score ?? 0);
+                const s2 = Number(match.details?.second_team_score ?? 0);
+                const statusLabel = getMatchStatus(match);
 
                 return (
                   <Link
@@ -147,93 +235,44 @@ const Matches = () => {
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-slate-900/50 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden border border-white/10 hover:border-red-500/30 hover:shadow-red-500/10 transition-all duration-300 group cursor-pointer"
+                      transition={{ delay: index * 0.05 }}
+                      className="bg-slate-900/50 rounded-2xl border border-white/10 hover:border-red-500/30 transition-all group"
                     >
-                      <div className="bg-black/40 px-6 py-3 flex justify-between items-center border-b border-white/5">
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-gradient-to-r from-red-600 to-blue-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-red-600/20">
+                      <div className="bg-black/40 px-6 py-3 flex justify-between border-b border-white/5">
+                        <div className="flex items-center gap-3">
+                          <span className="bg-gradient-to-r from-red-600 to-blue-600 px-3 py-1 rounded-full text-xs font-bold uppercase">
                             {match.type}
                           </span>
-                          <span className="text-slate-400 text-sm font-medium flex items-center">
-                            <Calendar className="w-4 h-4 mr-1" /> {match.date}
+                          <span className="text-slate-400 flex items-center text-sm">
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {match.date}
                           </span>
                         </div>
-                        <div className="flex items-center text-slate-400 text-sm font-medium">
-                          <Clock className="w-4 h-4 mr-1" /> {match.status}
+                        <div className="flex items-center text-slate-400 text-sm">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {statusLabel}
                         </div>
                       </div>
 
-                      <div className="p-6 md:p-8">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                          {/* Team 1 */}
-                          <div className="flex-1 flex flex-col items-center md:items-end text-center md:text-right">
-                            <div className="w-20 h-20 md:w-24 md:h-24 mb-4 relative group-hover:scale-110 transition-transform duration-300">
-                              <div className="absolute inset-0 bg-white/5 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                              <img
-                                src={team1.logo}
-                                alt={team1.name}
-                                className="w-full h-full object-contain drop-shadow-lg relative z-10"
-                              />
-                            </div>
-                            <h3 className="text-xl md:text-2xl font-bold text-white uppercase leading-tight">
-                              {team1.name}
-                            </h3>
-                          </div>
+                      <div className="p-8 flex items-center justify-between">
+                        <TeamBlock team={match.first_team} align="right" />
 
-                          {/* Score / VS */}
-                          <div className="flex flex-col items-center justify-center w-full md:w-auto shrink-0">
-                            <div className="text-4xl md:text-5xl font-black text-white flex items-center gap-4">
-                              <span
-                                className={
-                                  match.score1 > match.score2
-                                    ? "text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500"
-                                    : ""
-                                }
-                              >
-                                {match.score1}
-                              </span>
-                              <span className="text-2xl text-slate-600 font-medium">
-                                -
-                              </span>
-                              <span
-                                className={
-                                  match.score2 > match.score1
-                                    ? "text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500"
-                                    : ""
-                                }
-                              >
-                                {match.score2}
-                              </span>
-                            </div>
-                            <div className="mt-2 flex items-center text-slate-500 text-sm font-medium">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              {match.venue}
-                            </div>
-                            <div className="mt-4 text-xs font-bold text-red-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                              View Details
-                            </div>
+                        <div className="text-center">
+                          <div className="text-4xl font-black flex gap-4">
+                            <span>{s1}</span>
+                            <span className="text-slate-600">-</span>
+                            <span>{s2}</span>
                           </div>
-
-                          {/* Team 2 */}
-                          <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
-                            <div className="w-20 h-20 md:w-24 md:h-24 mb-4 relative group-hover:scale-110 transition-transform duration-300">
-                              <div className="absolute inset-0 bg-white/5 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                              <img
-                                src={team2.logo}
-                                alt={team2.name}
-                                className="w-full h-full object-contain drop-shadow-lg relative z-10"
-                              />
-                            </div>
-                            <h3 className="text-xl md:text-2xl font-bold text-white uppercase leading-tight">
-                              {team2.name}
-                            </h3>
+                          <div className="mt-2 flex items-center text-slate-500 text-sm">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            {match.stadium?.name || "TBD"}
                           </div>
                         </div>
+
+                        <TeamBlock team={match.second_team} align="left" />
                       </div>
 
-                      {/* Bottom Gradient Border */}
-                      <div className="h-1 w-full bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                      <div className="h-1 bg-gradient-to-r from-red-500 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
                     </motion.div>
                   </Link>
                 );
@@ -245,5 +284,25 @@ const Matches = () => {
     </Layout>
   );
 };
+
+/* ---------- Team UI ---------- */
+const TeamBlock = ({
+  team,
+  align,
+}: {
+  team: Team;
+  align: "left" | "right";
+}) => (
+  <div className={`flex-1 flex flex-col items-center`}>
+    <img
+      src={team.logo}
+      alt={team.name}
+      className={`w-20 h-20 object-contain mb-3 ${
+        align === "left" ? "md:mr-6" : "md:ml-6"
+      }`}
+    />
+    <h3 className="text-xl font-bold uppercase text-center">{team.name}</h3>
+  </div>
+);
 
 export default Matches;
