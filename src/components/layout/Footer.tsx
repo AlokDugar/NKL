@@ -24,9 +24,9 @@ interface Partner {
 const Footer = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
-    fetch("https://api-v1.nepalkabaddileague.com/api/partners")
+    fetch(`${API_BASE_URL}/partners`)
       .then((res) => res.json())
       .then((data) => setPartners(data.data || []))
       .finally(() => setLoading(false));

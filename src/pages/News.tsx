@@ -15,11 +15,9 @@ interface NewsItem {
 const News = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
-    fetch(
-      "https://api-v1.nepalkabaddileague.com/api/items?category_slug=news&category_id=74"
-    )
+    fetch(`${API_BASE_URL}/items?category_slug=news&category_id=74`)
       .then((res) => res.json())
       .then((res) => {
         const items = (res.data?.data || []).map((item: any) => ({
@@ -33,7 +31,7 @@ const News = () => {
 
         items.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
 
         setNews(items);

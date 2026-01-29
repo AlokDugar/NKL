@@ -15,9 +15,9 @@ interface Team {
 const Teams = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
-    fetch("https://api-v1.nepalkabaddileague.com/api/teams")
+    fetch(`${API_BASE_URL}/teams`)
       .then((res) => res.json())
       .then((data) => setTeams(data.data || []))
       .finally(() => setLoading(false));

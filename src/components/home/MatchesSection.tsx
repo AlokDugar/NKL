@@ -35,9 +35,9 @@ interface Match {
 const MatchesSection = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
-    fetch("https://api-v1.nepalkabaddileague.com/api/games")
+    fetch(`${API_BASE_URL}/games`)
       .then((res) => res.json())
       .then((res) => {
         const typePriority: Record<string, number> = {
@@ -119,8 +119,8 @@ const MatchesSection = () => {
               match.details?.status === 1
                 ? "Finished"
                 : s1 === s2
-                ? "Draw"
-                : "Live";
+                  ? "Draw"
+                  : "Live";
 
             return (
               <motion.div
@@ -170,7 +170,7 @@ const MatchesSection = () => {
                         <span
                           className={clsx(
                             "text-5xl font-black",
-                            s1 > s2 ? "text-white" : "text-gray-600"
+                            s1 > s2 ? "text-white" : "text-gray-600",
                           )}
                         >
                           {s1}
@@ -181,7 +181,7 @@ const MatchesSection = () => {
                         <span
                           className={clsx(
                             "text-5xl font-black",
-                            s2 > s1 ? "text-white" : "text-gray-600"
+                            s2 > s1 ? "text-white" : "text-gray-600",
                           )}
                         >
                           {s2}

@@ -50,7 +50,7 @@ const LiveScoreCard = () => {
     return saved ? JSON.parse(saved) : false;
   });
   const [currentRaider, setCurrentRaider] = useState<string>(
-    "GHANSHYAM ROKA MAGAR"
+    "GHANSHYAM ROKA MAGAR",
   );
   const [raidingTeam, setRaidingTeam] = useState<"A" | "B">("A");
 
@@ -229,7 +229,7 @@ const LiveScoreCard = () => {
       animate={{ opacity: 1, x: 0 }}
       className={clsx(
         "fixed right-4 z-40 transition-all duration-300",
-        isMinimized ? "top-auto bottom-4 w-auto" : "top-24 w-72 md:w-80"
+        isMinimized ? "top-auto bottom-4 w-auto" : "top-24 w-72 md:w-80",
       )}
     >
       <div className="bg-black/90 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden shadow-2xl shadow-red-900/20 relative">
@@ -297,7 +297,7 @@ const LiveScoreCard = () => {
               <div
                 className={clsx(
                   "text-xs font-mono flex items-center gap-1",
-                  matchEnded ? "text-white font-bold" : "text-gray-400"
+                  matchEnded ? "text-white font-bold" : "text-gray-400",
                 )}
               >
                 <Timer size={10} />
@@ -326,7 +326,7 @@ const LiveScoreCard = () => {
                           "w-1.5 h-1.5 rounded-full transition-colors duration-300",
                           i < activePlayersA
                             ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"
-                            : "bg-gray-700"
+                            : "bg-gray-700",
                         )}
                       />
                     ))}
@@ -391,7 +391,7 @@ const LiveScoreCard = () => {
                           "w-1.5 h-1.5 rounded-full transition-colors duration-300",
                           i < activePlayersB
                             ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"
-                            : "bg-gray-700"
+                            : "bg-gray-700",
                         )}
                       />
                     ))}
@@ -414,8 +414,8 @@ const LiveScoreCard = () => {
                       {scoreA > scoreB
                         ? `${teamA.name} WON`
                         : scoreB > scoreA
-                        ? `${teamB.name} WON`
-                        : "MATCH DRAW"}
+                          ? `${teamB.name} WON`
+                          : "MATCH DRAW"}
                     </span>
                   </motion.div>
                 ) : showAnimation ? (
@@ -445,19 +445,19 @@ const LiveScoreCard = () => {
                         showAnimation === "SUPER_RAID"
                           ? "text-yellow-400"
                           : showAnimation === "SUPER_TACKLE"
-                          ? "text-blue-400"
-                          : showAnimation === "ALL_OUT"
-                          ? "text-purple-400"
-                          : showAnimation === "DO_OR_DIE"
-                          ? "text-red-500"
-                          : "text-white"
+                            ? "text-blue-400"
+                            : showAnimation === "ALL_OUT"
+                              ? "text-purple-400"
+                              : showAnimation === "DO_OR_DIE"
+                                ? "text-red-500"
+                                : "text-white",
                       )}
                     >
                       {showAnimation === "RAID_POINT"
                         ? "Raid Point +1"
                         : showAnimation === "TACKLE_POINT"
-                        ? "Tackle Point +1"
-                        : showAnimation.replace("_", " ")}
+                          ? "Tackle Point +1"
+                          : showAnimation.replace("_", " ")}
                     </span>
                   </motion.div>
                 ) : (
@@ -475,7 +475,7 @@ const LiveScoreCard = () => {
                       <span
                         className={clsx(
                           "w-1.5 h-1.5 rounded-full animate-pulse",
-                          raidingTeam === "A" ? "bg-red-500" : "bg-blue-500"
+                          raidingTeam === "A" ? "bg-red-500" : "bg-blue-500",
                         )}
                       />
                       <span className="text-xs font-bold text-white truncate max-w-[200px]">

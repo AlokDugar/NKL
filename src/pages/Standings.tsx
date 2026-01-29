@@ -35,7 +35,7 @@ interface Team {
 
 const getFormFromGames = (
   games: Game[],
-  teamId: number
+  teamId: number,
 ): ("W" | "L" | "D")[] => {
   if (!games || games.length === 0) return [];
   return games.slice(0, 5).map((game) => {
@@ -48,13 +48,13 @@ const getFormFromGames = (
 const Standings = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
-    fetch("https://api-v1.nepalkabaddileague.com/api/standings")
+    fetch(`${API_BASE_URL}/standings`)
       .then((res) => res.json())
       .then((data) => {
         const sorted = (data.data || []).sort(
-          (a: Team, b: Team) => b.total_points - a.total_points
+          (a: Team, b: Team) => b.total_points - a.total_points,
         );
         setTeams(sorted);
       })
@@ -171,8 +171,8 @@ const Standings = () => {
                                 team.total_score_diff > 0
                                   ? "text-emerald-400"
                                   : team.total_score_diff < 0
-                                  ? "text-red-400"
-                                  : "text-slate-400"
+                                    ? "text-red-400"
+                                    : "text-slate-400"
                               }`}
                             >
                               {team.total_score_diff > 0 ? "+" : ""}

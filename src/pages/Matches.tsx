@@ -50,21 +50,17 @@ const Matches = () => {
   const [selectedTeam, setSelectedTeam] = useState("ALL");
   const [searchDate, setSearchDate] = useState("");
 
-  /* ---------- Fetch Data ---------- */
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     Promise.all([
-      fetch("https://api-v1.nepalkabaddileague.com/api/games").then((r) =>
-        r.json()
-      ),
-      fetch("https://api-v1.nepalkabaddileague.com/api/seasons").then((r) =>
-        r.json()
-      ),
+      fetch(`${API_BASE_URL}/games`).then((r) => r.json()),
+      fetch(`${API_BASE_URL}/seasons`).then((r) => r.json()),
     ])
       .then(([gamesRes, seasonsRes]) => {
         // Sort matches by date descending
         const sortedMatches = (gamesRes.data || []).sort(
           (a: Match, b: Match) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
+            new Date(b.date).getTime() - new Date(a.date).getTime(),
         );
 
         setMatches(sortedMatches);
@@ -145,7 +141,7 @@ const Matches = () => {
                   >
                     {status}
                   </button>
-                )
+                ),
               )}
             </div>
 
@@ -182,7 +178,7 @@ const Matches = () => {
                       matches.flatMap((m) => [
                         [m.first_team.id, m.first_team],
                         [m.second_team.id, m.second_team],
-                      ])
+                      ]),
                     ).values(),
                   ].map((team) => (
                     <option key={team.id} value={team.id}>

@@ -85,14 +85,14 @@ const MatchDetails = () => {
 
   const transformMatchData = (
     apiData: any,
-    lineupStatsData: any
+    lineupStatsData: any,
   ): Match | null => {
     if (!apiData?.data) return null;
     const data = apiData.data;
 
     const calculateStats = (teamId: number) => {
       const activities = data.activities.filter(
-        (a: any) => a.team_id === teamId
+        (a: any) => a.team_id === teamId,
       );
       const sum = (types: string[]) =>
         activities
@@ -183,7 +183,7 @@ const MatchDetails = () => {
 
   const generateMomentumData = (match: Match) => {
     const validActivities = match.activities.filter(
-      (a) => a.time && parseTime(a.time) > 0
+      (a) => a.time && parseTime(a.time) > 0,
     );
 
     if (validActivities.length === 0) {
@@ -210,7 +210,7 @@ const MatchDetails = () => {
     for (let i = 0; i <= intervals; i++) {
       const endTime = i * interval;
       const activitiesUpToNow = validActivities.filter(
-        (a) => parseTime(a.time) <= endTime
+        (a) => parseTime(a.time) <= endTime,
       );
 
       const t1Score = activitiesUpToNow
@@ -230,15 +230,13 @@ const MatchDetails = () => {
 
     return data;
   };
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     const fetchMatchData = async () => {
       try {
         const [matchRes, lineupStatsRes] = await Promise.all([
-          fetch(`https://api-v1.nepalkabaddileague.com/api/games/${matchId}`),
-          fetch(
-            `https://api-v1.nepalkabaddileague.com/api/lineup-stats/${matchId}`
-          ),
+          fetch(`${API_BASE_URL}/games/${matchId}`),
+          fetch(`${API_BASE_URL}/lineup-stats/${matchId}`),
         ]);
 
         const matchData = await matchRes.json();
@@ -258,7 +256,7 @@ const MatchDetails = () => {
                   acc[player.id] = player;
                   return acc;
                 },
-                {}
+                {},
               );
             }
           });
@@ -539,17 +537,17 @@ const MatchDetails = () => {
                   {startingLineups[`team${idx + 1}`].map((player) => {
                     // Find player stats from lineup-stats API
                     const playerStats = Object.values(
-                      (window as any).lineupStatsCache?.[teamId] || {}
+                      (window as any).lineupStatsCache?.[teamId] || {},
                     ).find((p: any) => p.id === player.id) as any;
 
                     const raidPoints = parseInt(
-                      playerStats?.raid_points || "0"
+                      playerStats?.raid_points || "0",
                     );
                     const tacklePoints = parseInt(
-                      playerStats?.tackle_points || "0"
+                      playerStats?.tackle_points || "0",
                     );
                     const totalPoints = parseInt(
-                      playerStats?.total_points || "0"
+                      playerStats?.total_points || "0",
                     );
 
                     return (

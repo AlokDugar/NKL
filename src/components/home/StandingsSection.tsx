@@ -36,14 +36,14 @@ interface Team {
 const StandingsSection = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
-    fetch("https://api-v1.nepalkabaddileague.com/api/standings")
+    fetch(`${API_BASE_URL}/standings`)
       .then((res) => res.json())
       .then((data) => {
         // Sort by total points descending
         const sorted = (data.data || []).sort(
-          (a: Team, b: Team) => b.total_points - a.total_points
+          (a: Team, b: Team) => b.total_points - a.total_points,
         );
         setTeams(sorted);
       })
@@ -137,10 +137,10 @@ const StandingsSection = () => {
                             index === 0
                               ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-black"
                               : index === 1
-                              ? "bg-gradient-to-br from-gray-300 to-gray-500 text-black"
-                              : index === 2
-                              ? "bg-gradient-to-br from-orange-600 to-orange-800 text-white"
-                              : "bg-white/10 text-white"
+                                ? "bg-gradient-to-br from-gray-300 to-gray-500 text-black"
+                                : index === 2
+                                  ? "bg-gradient-to-br from-orange-600 to-orange-800 text-white"
+                                  : "bg-white/10 text-white"
                           }`}
                         >
                           {index + 1}

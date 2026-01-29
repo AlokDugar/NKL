@@ -30,7 +30,7 @@ const chartStyles = `
   .recharts-tooltip-item { color: #ccc !important; }
 `;
 
-const API_BASE = "https://api-v1.nepalkabaddileague.com/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const TeamDetails = () => {
   const { slug } = useParams();
@@ -55,12 +55,12 @@ const TeamDetails = () => {
         setLoading(true);
         setError(null);
 
-        const teamRes = await fetch(`${API_BASE}/teams/${slug}`);
+        const teamRes = await fetch(`${API_BASE_URL}/teams/${slug}`);
         if (!teamRes.ok) throw new Error("Team not found");
         const teamData = await teamRes.json();
         setTeam(teamData.data);
 
-        const seasonsRes = await fetch(`${API_BASE}/seasons`);
+        const seasonsRes = await fetch(`${API_BASE_URL}/seasons`);
         const seasonsData = await seasonsRes.json();
         setSeasons(seasonsData.data || []);
         if (seasonsData.data?.length > 0) {
@@ -83,7 +83,7 @@ const TeamDetails = () => {
 
       try {
         const squadRes = await fetch(
-          `${API_BASE}/squads?team_slug=${slug}&season_id=${selectedSeason}`
+          `${API_BASE_URL}/squads?team_slug=${slug}&season_id=${selectedSeason}`,
         );
         const squadData = await squadRes.json();
 
@@ -123,7 +123,7 @@ const TeamDetails = () => {
       try {
         setLoadingStats(true);
         const statsRes = await fetch(
-          `${API_BASE}/team-stats?team_id=${team.id}&season_id=${selectedSeason}`
+          `${API_BASE_URL}/team-stats?team_id=${team.id}&season_id=${selectedSeason}`,
         );
         const statsData = await statsRes.json();
         setTeamStats(statsData.data?.[0] || null);
@@ -146,7 +146,7 @@ const TeamDetails = () => {
         metric: "Raid Success %",
         value: percent(
           Number(teamStats.successful_raid),
-          Number(teamStats.total_raids)
+          Number(teamStats.total_raids),
         ),
         type: "percent",
       },
@@ -154,7 +154,7 @@ const TeamDetails = () => {
         metric: "Tackle Success %",
         value: percent(
           Number(teamStats.successful_tackle),
-          Number(teamStats.total_tackles)
+          Number(teamStats.total_tackles),
         ),
         type: "percent",
       },
@@ -676,7 +676,7 @@ const TeamDetails = () => {
                           <span className="text-red-500">
                             {percent(
                               Number(teamStats.successful_raid),
-                              Number(teamStats.total_raids)
+                              Number(teamStats.total_raids),
                             ).toFixed(1)}
                             %
                           </span>
@@ -687,7 +687,7 @@ const TeamDetails = () => {
                             style={{
                               width: `${percent(
                                 Number(teamStats.successful_raid),
-                                Number(teamStats.total_raids)
+                                Number(teamStats.total_raids),
                               ).toFixed(1)}%`,
                             }}
                           />
@@ -777,7 +777,7 @@ const TeamDetails = () => {
                           <span className="text-blue-500">
                             {percent(
                               Number(teamStats.successful_tackle),
-                              Number(teamStats.total_tackles)
+                              Number(teamStats.total_tackles),
                             ).toFixed(1)}
                             %
                           </span>
@@ -788,7 +788,7 @@ const TeamDetails = () => {
                             style={{
                               width: `${percent(
                                 Number(teamStats.successful_tackle),
-                                Number(teamStats.total_tackles)
+                                Number(teamStats.total_tackles),
                               ).toFixed(1)}%`,
                             }}
                           />

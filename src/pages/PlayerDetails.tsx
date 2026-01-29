@@ -25,8 +25,6 @@ import {
   Radar,
 } from "recharts";
 
-const API_BASE = "https://api-v1.nepalkabaddileague.com/api";
-
 const PlayerDetails = () => {
   const { slug } = useParams();
   const location = useLocation();
@@ -40,13 +38,11 @@ const PlayerDetails = () => {
   const [selectedSeason, setSelectedSeason] = useState(null);
   const [teamHistory, setTeamHistory] = useState([]);
 
-  /* ----------------------------------------
-     FETCH SEASONS
-  ---------------------------------------- */
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     const fetchSeasons = async () => {
       try {
-        const res = await fetch(`${API_BASE}/seasons`);
+        const res = await fetch(`${API_BASE_URL}/seasons`);
         const json = await res.json();
         const seasonData = json?.data || [];
         setSeasons(seasonData);
@@ -74,7 +70,7 @@ const PlayerDetails = () => {
         setLoading(true);
 
         // Fetch player basic info
-        const playerRes = await fetch(`${API_BASE}/players/${slug}`);
+        const playerRes = await fetch(`${API_BASE_URL}/players/${slug}`);
         const playerJson = await playerRes.json();
         const playerData = playerJson?.data;
 
@@ -86,7 +82,7 @@ const PlayerDetails = () => {
         // Fetch player stats for selected season
         if (playerData?.id) {
           const statsRes = await fetch(
-            `${API_BASE}/player-stats?season_id=${selectedSeason}&player_id=${playerData.id}`
+            `${API_BASE_URL}/player-stats?season_id=${selectedSeason}&player_id=${playerData.id}`,
           );
           const statsJson = await statsRes.json();
           const statsData = statsJson?.data?.[0];
@@ -135,7 +131,7 @@ const PlayerDetails = () => {
       try {
         const historyPromises = seasons.map(async (season) => {
           const res = await fetch(
-            `${API_BASE}/player-stats?season_id=${season.id}&player_id=${player.id}`
+            `${API_BASE_URL}/player-stats?season_id=${season.id}&player_id=${player.id}`,
           );
           const json = await res.json();
           const data = json?.data?.[0];
@@ -186,7 +182,7 @@ const PlayerDetails = () => {
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Player Not Found</h2>
             <Link
-              to="/teams"
+              to="/team"
               className="text-red-500 hover:text-red-400 font-medium flex items-center justify-center"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
