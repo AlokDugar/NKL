@@ -85,7 +85,7 @@ const Footer = () => {
           <div className="mb-16">
             <div className="flex items-center gap-4 justify-center mb-10">
               <div className="h-px flex-1 max-w-24 bg-gradient-to-r from-transparent to-white/20" />
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500">
+              <p className="text-2xl font-black uppercase tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500">
                 Official Partners
               </p>
               <div className="h-px flex-1 max-w-24 bg-gradient-to-l from-transparent to-white/20" />
