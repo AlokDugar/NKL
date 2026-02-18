@@ -80,7 +80,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 pt-16 pb-8">
+        <div className="container mx-auto px-6 pt-16 pb-8">
           {/* ── Partners ── */}
           <div className="mb-16">
             <div className="flex items-center gap-4 justify-center mb-10">

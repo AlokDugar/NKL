@@ -1,7 +1,7 @@
 import { Trophy, Calendar, Users, Award, Video, Newspaper } from 'lucide-react';
 
 export const ABOUT_CONTENT = {
-  title: "Astrionix Management P. Ltd.",
+  title: "Astrionix Management Pvt. Ltd.",
   description:
     "Astrionix Management Pvt Ltd, a proud affiliate of the Begani Group with a legacy spanning half a century, is thrilled to announce the Nepal Kabaddi League (NKL). NKL aims to revitalize kabaddi with modern flair, captivating audiences nationwide. Backed by extensive expertise, we are committed to delivering a world-class kabaddi experience through strategic partnerships and cutting-edge technology. The Nepal Kabaddi League is poised to redefine entertainment in Nepal, fostering a new era of sports culture where every match is a spectacle, every player a hero, and every moment unforgettable.",
   image:
