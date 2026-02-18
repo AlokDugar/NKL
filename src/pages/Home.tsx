@@ -13,7 +13,7 @@ const Home = () => {
     <Layout>
       <Hero />
       <LiveScoreCard />
-      <SeasonTracker />
+      {/* <SeasonTracker /> */}
       <ReigningChampions />
       <NewsSection />
       <MatchesSection />

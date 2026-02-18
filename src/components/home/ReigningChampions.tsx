@@ -50,7 +50,7 @@ const ReigningChampions = () => {
             className="text-4xl md:text-6xl lg:text-7xl font-black text-white uppercase tracking-tighter mb-12"
           >
             Reigning{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-600">
+            <span className="inline-block px-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-600">
               Champions
             </span>
           </motion.h2>

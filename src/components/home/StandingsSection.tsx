@@ -37,11 +37,11 @@ const StandingsSection = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/standings`)
       .then((res) => res.json())
       .then((data) => {
-        // Sort by total points descending
         const sorted = (data.data || []).sort(
           (a: Team, b: Team) => b.total_points - a.total_points,
         );
@@ -51,17 +51,24 @@ const StandingsSection = () => {
   }, []);
 
   return (
-    <section className="py-20 bg-zinc-900 relative overflow-hidden">
-      {/* Decorative Background */}
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-blue-950/20 pointer-events-none" />
+    <section className="py-20 bg-slate-950 relative overflow-hidden">
+      {/* ── Background — same palette as footer, glows bleed downward ── */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Matches the footer's top-left/top-right glow pattern so they feel continuous */}
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-red-600/10 blur-[150px] rounded-full" />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[150px] rounded-full" />
+        {/* Fade at the very bottom so it dissolves into footer */}
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent to-slate-950" />
+      </div>
 
       <div className="container mx-auto px-4 relative z-10">
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div>
             <motion.span
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
               className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500 font-bold uppercase tracking-widest text-sm block mb-2"
             >
               Leaderboard
@@ -69,6 +76,7 @@ const StandingsSection = () => {
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
               className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter"
             >
               League{" "}
@@ -81,6 +89,7 @@ const StandingsSection = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
           >
             <Link
               to="/standings"
@@ -95,11 +104,12 @@ const StandingsSection = () => {
           </motion.div>
         </div>
 
-        <div className="bg-black/50 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm shadow-2xl shadow-blue-900/10">
+        {/* Table */}
+        <div className="bg-black/30 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_0_60px_-15px_rgba(220,38,38,0.15),0_0_60px_-15px_rgba(37,99,235,0.15)]">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gradient-to-r from-red-900/20 to-blue-900/20 text-gray-300 text-xs uppercase tracking-wider border-b border-white/10">
+                <tr className="bg-gradient-to-r from-red-900/20 to-blue-900/20 text-slate-400 text-xs uppercase tracking-wider border-b border-white/10">
                   <th className="p-6 font-bold">Pos</th>
                   <th className="p-6 font-bold">Team</th>
                   <th className="p-6 font-bold text-center">P</th>
@@ -112,13 +122,13 @@ const StandingsSection = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="p-6 text-center text-white">
+                    <td colSpan={7} className="p-6 text-center text-slate-400">
                       Loading standings...
                     </td>
                   </tr>
                 ) : teams.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-6 text-center text-white">
+                    <td colSpan={7} className="p-6 text-center text-slate-400">
                       No data found
                     </td>
                   </tr>
@@ -128,23 +138,22 @@ const StandingsSection = () => {
                       key={team.id}
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
                       transition={{ delay: index * 0.05 }}
-                      className="border-b border-white/5 hover:bg-gradient-to-r hover:from-red-900/10 hover:to-blue-900/10 transition-colors group"
+                      className="border-b border-white/5 last:border-0 hover:bg-gradient-to-r hover:from-red-900/10 hover:to-blue-900/10 transition-colors group"
                     >
                       <td className="p-6">
-                        <span
-                          className={`w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm shadow-lg ${
-                            index === 0
-                              ? "bg-gradient-to-br from-yellow-400 to-yellow-600 text-black"
-                              : index === 1
-                                ? "bg-gradient-to-br from-gray-300 to-gray-500 text-black"
-                                : index === 2
-                                  ? "bg-gradient-to-br from-orange-600 to-orange-800 text-white"
-                                  : "bg-white/10 text-white"
-                          }`}
-                        >
-                          {index + 1}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm ${
+                              index < 4
+                                ? "bg-green-500/15 border border-green-500/50 text-green-400"
+                                : "bg-white/10 text-white"
+                            }`}
+                          >
+                            {index + 1}
+                          </span>
+                        </div>
                       </td>
                       <td className="p-6">
                         <div className="flex items-center gap-4">
@@ -158,20 +167,20 @@ const StandingsSection = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="p-6 text-center text-gray-300 font-medium">
+                      <td className="p-6 text-center text-slate-300 font-medium">
                         {team.total_matches}
                       </td>
-                      <td className="p-6 text-center text-green-500 font-bold">
+                      <td className="p-6 text-center text-green-400 font-bold">
                         {team.total_wins}
                       </td>
-                      <td className="p-6 text-center text-red-500 font-bold">
+                      <td className="p-6 text-center text-red-400 font-bold">
                         {team.total_losses}
                       </td>
-                      <td className="p-6 text-center text-gray-300 font-medium">
+                      <td className="p-6 text-center text-slate-300 font-medium">
                         {team.total_draws}
                       </td>
                       <td className="p-6 text-center">
-                        <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                        <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">
                           <CountUp
                             end={team.total_points}
                             duration={2}

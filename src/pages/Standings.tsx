@@ -50,15 +50,45 @@ const Standings = () => {
   const [loading, setLoading] = useState(true);
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
-    fetch(`${API_BASE_URL}/standings`)
-      .then((res) => res.json())
-      .then((data) => {
-        const sorted = (data.data || []).sort(
+    const fetchLatestStandings = async () => {
+      try {
+        setLoading(true);
+
+        // 1️⃣ Fetch all seasons
+        const seasonRes = await fetch(`${API_BASE_URL}/seasons`);
+        const seasonData = await seasonRes.json();
+
+        const seasons = seasonData.data || [];
+
+        if (seasons.length === 0) {
+          setTeams([]);
+          return;
+        }
+
+        // 2️⃣ Get latest season (highest ID)
+        const latestSeason = seasons.sort((a: any, b: any) => b.id - a.id)[0];
+
+        // 3️⃣ Fetch standings of latest season
+        const standingsRes = await fetch(
+          `${API_BASE_URL}/standings?season_id=${latestSeason.id}`,
+        );
+
+        const standingsData = await standingsRes.json();
+
+        const sorted = (standingsData.data || []).sort(
           (a: Team, b: Team) => b.total_points - a.total_points,
         );
+
         setTeams(sorted);
-      })
-      .finally(() => setLoading(false));
+      } catch (error) {
+        console.error("Error fetching standings:", error);
+        setTeams([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLatestStandings();
   }, []);
 
   return (

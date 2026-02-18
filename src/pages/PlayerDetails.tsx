@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import Layout from "../components/layout/Layout";
 
-// Recharts
 import {
   PieChart,
   Pie,
@@ -39,6 +38,7 @@ const PlayerDetails = () => {
   const [teamHistory, setTeamHistory] = useState([]);
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     const fetchSeasons = async () => {
       try {
@@ -46,8 +46,6 @@ const PlayerDetails = () => {
         const json = await res.json();
         const seasonData = json?.data || [];
         setSeasons(seasonData);
-
-        // Set the first season as default
         if (seasonData.length > 0 && !selectedSeason) {
           setSelectedSeason(seasonData[0].id);
         }
@@ -55,38 +53,25 @@ const PlayerDetails = () => {
         console.error("Error fetching seasons:", err);
       }
     };
-
     fetchSeasons();
   }, []);
 
-  /* ----------------------------------------
-     FETCH PLAYER DATA & STATS
-  ---------------------------------------- */
   useEffect(() => {
     if (!selectedSeason) return;
-
     const fetchPlayerData = async () => {
       try {
         setLoading(true);
-
-        // Fetch player basic info
         const playerRes = await fetch(`${API_BASE_URL}/players/${slug}`);
         const playerJson = await playerRes.json();
         const playerData = playerJson?.data;
-
-        // Log to debug
-        console.log("Player Data:", playerData);
-
         setPlayer(playerData);
 
-        // Fetch player stats for selected season
         if (playerData?.id) {
           const statsRes = await fetch(
             `${API_BASE_URL}/player-stats?season_id=${selectedSeason}&player_id=${playerData.id}`,
           );
           const statsJson = await statsRes.json();
           const statsData = statsJson?.data?.[0];
-
           if (statsData) {
             setStats({
               total_points: parseInt(statsData.total_points) || 0,
@@ -107,7 +92,6 @@ const PlayerDetails = () => {
               team_slug: statsData.slug,
             });
           } else {
-            // No stats for this season
             setStats(null);
           }
         }
@@ -117,16 +101,11 @@ const PlayerDetails = () => {
         setLoading(false);
       }
     };
-
     fetchPlayerData();
   }, [slug, selectedSeason]);
 
-  /* ----------------------------------------
-     FETCH TEAM HISTORY (ALL SEASONS)
-  ---------------------------------------- */
   useEffect(() => {
     if (!player?.id || seasons.length === 0) return;
-
     const fetchTeamHistory = async () => {
       try {
         const historyPromises = seasons.map(async (season) => {
@@ -135,7 +114,6 @@ const PlayerDetails = () => {
           );
           const json = await res.json();
           const data = json?.data?.[0];
-
           if (data) {
             return {
               season_id: season.id,
@@ -149,22 +127,25 @@ const PlayerDetails = () => {
           }
           return null;
         });
-
         const history = await Promise.all(historyPromises);
         setTeamHistory(history.filter(Boolean));
       } catch (err) {
         console.error("Error fetching team history:", err);
       }
     };
-
     fetchTeamHistory();
   }, [player, seasons]);
 
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center bg-black text-white">
-          <div className="text-center">
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/20 to-slate-950" />
+            <div className="absolute -top-40 left-1/4 w-[500px] h-[500px] bg-red-600/20 blur-[150px] rounded-full" />
+            <div className="absolute -bottom-40 right-1/4 w-[500px] h-[500px] bg-blue-600/20 blur-[150px] rounded-full" />
+          </div>
+          <div className="text-center relative z-10">
             <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-slate-400 font-bold uppercase">
               Loading Player...
@@ -178,7 +159,7 @@ const PlayerDetails = () => {
   if (!player) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Player Not Found</h2>
             <Link
@@ -194,9 +175,6 @@ const PlayerDetails = () => {
     );
   }
 
-  /* ----------------------------------------
-     CHART DATA
-  ---------------------------------------- */
   const raidVsTackleData = stats
     ? [
         {
@@ -222,13 +200,18 @@ const PlayerDetails = () => {
       ]
     : [];
 
-  /* ----------------------------------------
-     RENDER
-  ---------------------------------------- */
   return (
     <Layout>
-      <div className="pt-24 pb-20 min-h-screen bg-black text-white font-sans">
-        <div className="container mx-auto px-4">
+      <div className="pt-24 pb-20 min-h-screen bg-slate-950 text-white font-sans relative overflow-hidden">
+        {/* ── Colorful ambient background glows ── */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/20 to-slate-950" />
+          <div className="absolute -top-40 left-0 w-[600px] h-[600px] bg-red-600/20 blur-[180px] rounded-full opacity-50" />
+          <div className="absolute top-1/3 right-0 w-[600px] h-[600px] bg-blue-600/20 blur-[180px] rounded-full opacity-40" />
+          <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] bg-red-900/15 blur-[120px] rounded-full" />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
           {/* Back Button */}
           <Link
             to={passedTeamSlug ? `/team/${passedTeamSlug}` : "/team"}
@@ -244,14 +227,11 @@ const PlayerDetails = () => {
             </span>
           </Link>
 
-          {/* Hero Section */}
+          {/* ── Hero Card ── */}
           <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border border-white/10 mb-12 shadow-2xl">
-            <div className="absolute inset-0 opacity-10 mix-blend-overlay" />
-
             <div className="grid md:grid-cols-2 gap-0 relative z-10">
               {/* Image Side */}
               <div className="relative h-[600px] md:h-[700px] bg-gradient-to-br from-zinc-800 via-black to-zinc-900 flex items-center justify-center overflow-hidden">
-                {/* Player Image - Full Height */}
                 <motion.div
                   initial={{ opacity: 0, y: 50, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -265,11 +245,9 @@ const PlayerDetails = () => {
                   />
                 </motion.div>
 
-                {/* Fade to Background Effect */}
                 <div className="absolute inset-0 z-20 bg-gradient-to-r from-black/80 via-black/40 to-transparent pointer-events-none" />
                 <div className="absolute inset-0 z-20 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
 
-                {/* Jersey Number - Enhanced */}
                 {passedJersey && (
                   <motion.div
                     initial={{ opacity: 0, x: -30 }}
@@ -296,7 +274,7 @@ const PlayerDetails = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
                 >
-                  {/* Position Badge */}
+                  {/* Position Badge — original red/orange gradient */}
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -327,7 +305,7 @@ const PlayerDetails = () => {
                     </span>
                   </motion.h1>
 
-                  {/* Jersey & Team Info */}
+                  {/* Jersey & Team */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -359,7 +337,7 @@ const PlayerDetails = () => {
                     )}
                   </motion.div>
 
-                  {/* Season Selector */}
+                  {/* Season Selector — original red active style */}
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -400,7 +378,7 @@ const PlayerDetails = () => {
                     </div>
                   </motion.div>
 
-                  {/* Quick Stats Grid - Enhanced */}
+                  {/* Quick Stats Grid — original gradient colours */}
                   {stats ? (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -469,7 +447,7 @@ const PlayerDetails = () => {
             </div>
           </div>
 
-          {/* Career Timeline - Horizontal Scrollable */}
+          {/* ── Career Timeline ── */}
           {teamHistory.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -483,7 +461,6 @@ const PlayerDetails = () => {
               </h2>
 
               <div className="relative">
-                {/* Horizontal Scrollable Container */}
                 <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-red-600 scrollbar-track-white/5 pb-4">
                   <div className="flex gap-6 min-w-max">
                     {teamHistory.map((item, index) => (
@@ -496,7 +473,6 @@ const PlayerDetails = () => {
                         className="flex-shrink-0 w-[350px]"
                       >
                         <div className="relative bg-zinc-900 border border-white/10 rounded-xl hover:border-red-500/50 transition-all group h-full overflow-hidden">
-                          {/* Team Logo Shield Background */}
                           <div className="absolute inset-0 flex items-center justify-center opacity-5 group-hover:opacity-10 transition-opacity">
                             <img
                               src={item.team_logo_url}
@@ -504,9 +480,7 @@ const PlayerDetails = () => {
                               className="w-64 h-64 object-contain"
                             />
                           </div>
-
                           <div className="relative z-10 p-6">
-                            {/* Season Header */}
                             <div className="mb-6 text-center">
                               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
                                 {item.season_name}
@@ -525,8 +499,6 @@ const PlayerDetails = () => {
                                 {player.position?.name || "Player"}
                               </p>
                             </div>
-
-                            {/* Stats Preview */}
                             <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/10">
                               <div className="text-center">
                                 <div className="text-2xl font-black text-red-500">
@@ -560,7 +532,6 @@ const PlayerDetails = () => {
                   </div>
                 </div>
 
-                {/* Scroll Indicator */}
                 <div className="flex justify-center mt-6 gap-2">
                   {teamHistory.map((_, index) => (
                     <div
@@ -573,10 +544,9 @@ const PlayerDetails = () => {
             </motion.div>
           )}
 
-          {/* Detailed Stats & Charts */}
+          {/* ── Detailed Stats & Charts ── */}
           {stats && (
             <div className="grid lg:grid-cols-3 gap-8 mb-16">
-              {/* Stats Table */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -661,9 +631,7 @@ const PlayerDetails = () => {
                 </div>
               </motion.div>
 
-              {/* Charts Column */}
               <div className="space-y-8">
-                {/* Pie Chart */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -727,7 +695,6 @@ const PlayerDetails = () => {
                   )}
                 </motion.div>
 
-                {/* Radar Chart */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   whileInView={{ opacity: 1, x: 0 }}

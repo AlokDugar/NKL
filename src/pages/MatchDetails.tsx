@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import Layout from "../components/layout/Layout";
 import {
   ArrowLeft,
   Clock,
@@ -109,10 +110,8 @@ const MatchDetails = () => {
 
     const mapLineup = (teamId: number): Player[] => {
       if (!lineupStatsData?.data) return [];
-
       const teamPlayers = lineupStatsData.data[teamId.toString()];
       if (!teamPlayers || !Array.isArray(teamPlayers)) return [];
-
       return teamPlayers
         .filter((p: any) => p.gameCount > 0)
         .slice(0, 7)
@@ -129,7 +128,6 @@ const MatchDetails = () => {
     const team1Lineups = mapLineup(data.first_team_id);
     const team2Lineups = mapLineup(data.second_team_id);
 
-    // Calculate MVP from lineup stats
     const allPlayers: Player[] = [];
     if (lineupStatsData?.data) {
       Object.keys(lineupStatsData.data).forEach((teamId) => {
@@ -212,11 +210,9 @@ const MatchDetails = () => {
       const activitiesUpToNow = validActivities.filter(
         (a) => parseTime(a.time) <= endTime,
       );
-
       const t1Score = activitiesUpToNow
         .filter((a) => a.team_id === match.team1.id)
         .reduce((sum, a) => sum + (a.points || 0), 0);
-
       const t2Score = activitiesUpToNow
         .filter((a) => a.team_id === match.team2.id)
         .reduce((sum, a) => sum + (a.points || 0), 0);
@@ -230,6 +226,7 @@ const MatchDetails = () => {
 
     return data;
   };
+
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     const fetchMatchData = async () => {
@@ -242,7 +239,6 @@ const MatchDetails = () => {
         const matchData = await matchRes.json();
         const lineupStatsData = await lineupStatsRes.json();
 
-        // Cache lineup stats globally for player stats display
         if (!window.lineupStatsCache) {
           (window as any).lineupStatsCache = {};
         }
@@ -275,28 +271,36 @@ const MatchDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg font-bold">Loading match details...</p>
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-40 left-1/4 w-[500px] h-[500px] bg-red-600/20 blur-[150px] rounded-full" />
+            <div className="absolute -bottom-40 right-1/4 w-[500px] h-[500px] bg-blue-600/20 blur-[150px] rounded-full" />
+          </div>
+          <div className="text-center relative z-10">
+            <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-lg font-bold">Loading match details...</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (!match) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Match Not Found</h2>
-          <a
-            href="/schedule"
-            className="text-red-500 hover:text-red-400 font-medium flex items-center justify-center"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Schedule
-          </a>
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Match Not Found</h2>
+            <a
+              href="/schedule"
+              className="text-red-500 hover:text-red-400 font-medium flex items-center justify-center"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Schedule
+            </a>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -328,348 +332,440 @@ const MatchDetails = () => {
   const momentumData = generateMomentumData(match);
 
   return (
-    <div className="pt-24 pb-20 min-h-screen bg-black text-white font-sans">
-      <div className="container mx-auto px-4">
-        <a
-          href="/schedule"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors group"
-        >
-          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-red-600 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-          </div>
-          <span className="uppercase font-bold text-sm tracking-wider">
-            Back to Schedule
-          </span>
-        </a>
+    <Layout>
+      <div className="pt-24 pb-20 min-h-screen bg-slate-950 text-white font-sans relative overflow-hidden">
+        {/* ── Ambient background glows matching site theme ── */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/20 to-slate-950" />
+          <div className="absolute -top-40 left-0 w-[600px] h-[600px] bg-red-600/20 blur-[180px] rounded-full opacity-50" />
+          <div className="absolute top-1/3 right-0 w-[600px] h-[600px] bg-blue-600/20 blur-[180px] rounded-full opacity-40" />
+          <div className="absolute bottom-0 left-1/3 w-[400px] h-[400px] bg-red-900/15 blur-[120px] rounded-full" />
+        </div>
 
-        <div className="relative rounded-3xl overflow-hidden bg-zinc-900 border border-white/10 mb-12 p-8 md:p-16">
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-black/80" />
-
-          <div className="relative z-10 flex flex-col items-center">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 mb-8"
-            >
-              <span className="bg-red-600 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-red-900/50">
-                {match.type}
-              </span>
-              <span className="bg-white/10 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest text-white">
-                {match.status}
-              </span>
-            </motion.div>
-
-            <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24 w-full mb-12">
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-32 h-32 md:w-40 md:h-40 bg-black/40 rounded-full p-6 border-4 border-white/5 group-hover:border-red-500/50 transition-all duration-500 mb-6">
-                  <img
-                    src={team1.logo}
-                    alt={team1.name}
-                    className="w-full h-full object-contain drop-shadow-2xl"
-                  />
-                </div>
-                <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter mb-2">
-                  {team1.name}
-                </h2>
-                <div className="text-6xl md:text-8xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                  {match.score1}
-                </div>
-              </div>
-
-              <div className="flex flex-col items-center gap-4">
-                <div className="text-4xl font-black text-slate-600 italic">
-                  VS
-                </div>
-                <div className="w-px h-24 bg-gradient-to-b from-transparent via-slate-600 to-transparent" />
-              </div>
-
-              <div className="flex flex-col items-center text-center group">
-                <div className="w-32 h-32 md:w-40 md:h-40 bg-black/40 rounded-full p-6 border-4 border-white/5 group-hover:border-blue-500/50 transition-all duration-500 mb-6">
-                  <img
-                    src={team2.logo}
-                    alt={team2.name}
-                    className="w-full h-full object-contain drop-shadow-2xl"
-                  />
-                </div>
-                <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter mb-2">
-                  {team2.name}
-                </h2>
-                <div className="text-6xl md:text-8xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                  {match.score2}
-                </div>
-              </div>
+        <div className="container mx-auto px-4 relative z-10">
+          {/* Back link */}
+          <a
+            href="/schedule"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-red-600 transition-colors">
+              <ArrowLeft className="w-4 h-4" />
             </div>
+            <span className="uppercase font-bold text-sm tracking-wider">
+              Back to Schedule
+            </span>
+          </a>
 
-            <div className="flex flex-wrap justify-center gap-6 md:gap-12 text-slate-400 text-sm font-bold uppercase tracking-wider bg-black/40 px-8 py-4 rounded-full border border-white/10 backdrop-blur-sm">
-              <span className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-red-500" /> {match.date}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-slate-600" />
-              <span className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-red-500" /> {match.time}
-              </span>
-              <span className="w-1 h-1 rounded-full bg-slate-600" />
-              <span className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-red-500" /> {match.venue}
-              </span>
-            </div>
+          {/* ── Hero Score Card ── */}
+          <div
+            className="relative rounded-3xl overflow-hidden mb-12 p-8 md:p-16 border border-white/10
+                        bg-black/40 backdrop-blur-xl
+                        shadow-[0_0_60px_-10px_rgba(220,38,38,0.2),0_0_60px_-10px_rgba(37,99,235,0.2)]"
+          >
+            {/* gradient border shimmer */}
+            <div className="absolute inset-0 rounded-3xl p-[1px] bg-gradient-to-r from-red-600/30 via-transparent to-blue-600/30 pointer-events-none" />
+            {/* inner gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-transparent to-blue-900/10 pointer-events-none" />
 
-            {match.mvp && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowMVP(true)}
-                className="mt-8 px-8 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full font-black uppercase tracking-widest text-black shadow-lg shadow-orange-500/20 flex items-center gap-2"
+            <div className="relative z-10 flex flex-col items-center">
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 mb-8"
               >
-                <Trophy size={18} /> View Match MVP
-              </motion.button>
-            )}
-          </div>
-        </div>
+                <span className="bg-gradient-to-r from-red-600 to-red-700 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-red-900/50">
+                  {match.type}
+                </span>
+                <span className="bg-white/10 backdrop-blur-sm border border-white/10 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest text-white">
+                  {match.status}
+                </span>
+              </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-8 mb-16">
-          <div className="bg-zinc-900/50 rounded-2xl border border-white/10 p-6">
-            <h3 className="text-lg font-black uppercase italic mb-6 flex items-center gap-2">
-              <Activity className="text-red-500" /> Stats Comparison
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={pointsComparisonData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#333"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="name"
-                  stroke="#666"
-                  tick={{ fill: "#999", fontSize: 12, fontWeight: "bold" }}
-                />
-                <YAxis stroke="#666" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#000",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "8px",
-                  }}
-                  cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                />
-                <Bar
-                  dataKey={team1.name}
-                  fill="#ef4444"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey={team2.name}
-                  fill="#3b82f6"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="bg-zinc-900/50 rounded-2xl border border-white/10 p-6">
-            <h3 className="text-lg font-black uppercase italic mb-6 flex items-center gap-2">
-              <TrendingUp className="text-blue-500" /> Match Momentum (Real Data
-              Every 5min)
-            </h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={momentumData}>
-                <defs>
-                  <linearGradient id="colorTeam1" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorTeam2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="time" stroke="#666" />
-                <YAxis stroke="#666" />
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#333"
-                  vertical={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#000",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey={team1.name}
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorTeam1)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey={team2.name}
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorTeam2)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-12">
-          {[team1, team2].map((team, idx) => {
-            const teamId = idx === 0 ? match.team1.id : match.team2.id;
-
-            return (
-              <div key={team.name}>
-                <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-3">
-                  <h3 className="text-xl font-black uppercase italic text-white">
-                    {team.name}
-                  </h3>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Lineup
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {startingLineups[`team${idx + 1}`].map((player) => {
-                    // Find player stats from lineup-stats API
-                    const playerStats = Object.values(
-                      (window as any).lineupStatsCache?.[teamId] || {},
-                    ).find((p: any) => p.id === player.id) as any;
-
-                    const raidPoints = parseInt(
-                      playerStats?.raid_points || "0",
-                    );
-                    const tacklePoints = parseInt(
-                      playerStats?.tackle_points || "0",
-                    );
-                    const totalPoints = parseInt(
-                      playerStats?.total_points || "0",
-                    );
-
-                    return (
-                      <div
-                        key={player.id}
-                        className="flex items-center gap-3 p-3 bg-zinc-900/50 border border-white/5 rounded-lg hover:bg-zinc-800 transition-all group"
-                      >
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-black flex-shrink-0">
-                          <img
-                            src={player.image}
-                            alt={player.name}
-                            className="w-full h-full object-cover object-top"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <h4
-                            className={`font-bold text-white transition-colors group-hover:${
-                              idx === 0 ? "text-red-500" : "text-blue-500"
-                            }`}
-                          >
-                            {player.name}
-                          </h4>
-                          <p className="text-[10px] text-slate-400 uppercase font-bold">
-                            {player.role}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-center text-sm font-black text-right space-y-1 flex-shrink-0">
-                          <span className="text-red-500">⚡ {raidPoints}</span>
-                          <span className="text-blue-500">
-                            🛡️ {tacklePoints}
-                          </span>
-                          <span className="text-white">⭐ {totalPoints}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {showMVP && match.mvp && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowMVP(false)}
-              className="absolute inset-0 bg-black/90 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5, rotateX: 90 }}
-              animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-              exit={{ opacity: 0, scale: 0.5, rotateX: -90 }}
-              className="relative w-full max-w-lg bg-zinc-900 border border-yellow-500/30 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(234,179,8,0.2)]"
-            >
-              <button
-                onClick={() => setShowMVP(false)}
-                className="absolute top-4 right-4 z-20 p-2 bg-black/50 rounded-full text-white hover:bg-white hover:text-black transition-colors"
-              >
-                <X size={20} />
-              </button>
-
-              <div className="relative h-[500px] flex flex-col items-center justify-end pb-12">
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-yellow-500/20 rounded-full blur-3xl" />
-
-                <motion.img
-                  initial={{ y: 100, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  src={match.mvp.image}
-                  alt={match.mvp.name}
-                  className="absolute top-0 h-[80%] object-contain z-10 drop-shadow-2xl"
-                />
-
-                <div className="relative z-20 text-center">
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="mb-2"
+              <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24 w-full mb-12">
+                {/* Team 1 */}
+                <div className="flex flex-col items-center text-center group">
+                  <div
+                    className="w-32 h-32 md:w-40 md:h-40 bg-black/40 rounded-full p-6
+                                border-2 border-red-500/20 group-hover:border-red-500/60
+                                shadow-[0_0_30px_-5px_rgba(239,68,68,0.3)]
+                                group-hover:shadow-[0_0_50px_-5px_rgba(239,68,68,0.5)]
+                                transition-all duration-500 mb-6"
                   >
-                    <span className="px-4 py-1 bg-yellow-500 text-black text-xs font-black uppercase tracking-widest rounded-full shadow-lg shadow-yellow-500/50">
-                      Match MVP
+                    <img
+                      src={team1.logo}
+                      alt={team1.name}
+                      className="w-full h-full object-contain drop-shadow-2xl"
+                    />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter mb-2">
+                    {team1.name}
+                  </h2>
+                  <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-red-300 drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]">
+                    {match.score1}
+                  </div>
+                </div>
+
+                {/* VS divider */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500 italic">
+                    VS
+                  </div>
+                  <div className="w-px h-24 bg-gradient-to-b from-red-500/50 via-white/20 to-blue-500/50" />
+                </div>
+
+                {/* Team 2 */}
+                <div className="flex flex-col items-center text-center group">
+                  <div
+                    className="w-32 h-32 md:w-40 md:h-40 bg-black/40 rounded-full p-6
+                                border-2 border-blue-500/20 group-hover:border-blue-500/60
+                                shadow-[0_0_30px_-5px_rgba(59,130,246,0.3)]
+                                group-hover:shadow-[0_0_50px_-5px_rgba(59,130,246,0.5)]
+                                transition-all duration-500 mb-6"
+                  >
+                    <img
+                      src={team2.logo}
+                      alt={team2.name}
+                      className="w-full h-full object-contain drop-shadow-2xl"
+                    />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter mb-2">
+                    {team2.name}
+                  </h2>
+                  <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-300 drop-shadow-[0_0_20px_rgba(59,130,246,0.4)]">
+                    {match.score2}
+                  </div>
+                </div>
+              </div>
+
+              {/* Meta info pill */}
+              <div
+                className="flex flex-wrap justify-center gap-6 md:gap-12 text-slate-400 text-sm font-bold uppercase tracking-wider
+                            bg-black/50 backdrop-blur-sm px-8 py-4 rounded-full border border-white/10"
+              >
+                <span className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-red-500" /> {match.date}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-slate-600" />
+                <span className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-blue-500" /> {match.time}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-slate-600" />
+                <span className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-red-500" /> {match.venue}
+                </span>
+              </div>
+
+              {match.mvp && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowMVP(true)}
+                  className="mt-8 px-8 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full font-black uppercase tracking-widest text-black shadow-lg shadow-orange-500/30 flex items-center gap-2"
+                >
+                  <Trophy size={18} /> View Match MVP
+                </motion.button>
+              )}
+            </div>
+          </div>
+
+          {/* ── Charts ── */}
+          <div className="grid lg:grid-cols-2 gap-8 mb-16">
+            {/* Stats Comparison */}
+            <div
+              className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-6
+                          hover:border-red-500/20 transition-colors duration-300
+                          shadow-[0_0_30px_-10px_rgba(220,38,38,0.2)]"
+            >
+              <h3 className="text-lg font-black uppercase italic mb-6 flex items-center gap-2">
+                <Activity className="text-red-500" /> Stats Comparison
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={pointsComparisonData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#1e293b"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="name"
+                    stroke="#475569"
+                    tick={{ fill: "#94a3b8", fontSize: 12, fontWeight: "bold" }}
+                  />
+                  <YAxis stroke="#475569" tick={{ fill: "#94a3b8" }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(2,6,23,0.9)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "12px",
+                      backdropFilter: "blur(12px)",
+                    }}
+                    cursor={{ fill: "rgba(255,255,255,0.03)" }}
+                  />
+                  <Bar
+                    dataKey={team1.name}
+                    fill="url(#barRed)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey={team2.name}
+                    fill="url(#barBlue)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <defs>
+                    <linearGradient id="barRed" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ef4444" />
+                      <stop offset="100%" stopColor="#991b1b" />
+                    </linearGradient>
+                    <linearGradient id="barBlue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="100%" stopColor="#1e3a8a" />
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Momentum */}
+            <div
+              className="bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 p-6
+                          hover:border-blue-500/20 transition-colors duration-300
+                          shadow-[0_0_30px_-10px_rgba(37,99,235,0.2)]"
+            >
+              <h3 className="text-lg font-black uppercase italic mb-6 flex items-center gap-2">
+                <TrendingUp className="text-blue-500" /> Match Momentum
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={momentumData}>
+                  <defs>
+                    <linearGradient id="colorTeam1" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorTeam2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="time"
+                    stroke="#475569"
+                    tick={{ fill: "#94a3b8" }}
+                  />
+                  <YAxis stroke="#475569" tick={{ fill: "#94a3b8" }} />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#1e293b"
+                    vertical={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(2,6,23,0.9)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "12px",
+                      backdropFilter: "blur(12px)",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey={team1.name}
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorTeam1)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey={team2.name}
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorTeam2)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* ── Lineups ── */}
+          <div className="grid md:grid-cols-2 gap-12">
+            {[team1, team2].map((team, idx) => {
+              const teamId = idx === 0 ? match.team1.id : match.team2.id;
+              const accentColor = idx === 0 ? "red" : "blue";
+
+              return (
+                <div key={team.name}>
+                  <div
+                    className={`flex items-center justify-between mb-6 pb-3 border-b
+                                 ${idx === 0 ? "border-red-500/30" : "border-blue-500/30"}`}
+                  >
+                    <h3
+                      className={`text-xl font-black uppercase italic text-transparent bg-clip-text
+                                  ${
+                                    idx === 0
+                                      ? "bg-gradient-to-r from-red-400 to-white"
+                                      : "bg-gradient-to-r from-blue-400 to-white"
+                                  }`}
+                    >
+                      {team.name}
+                    </h3>
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      Lineup
                     </span>
-                  </motion.div>
+                  </div>
 
-                  <motion.h2
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-3xl font-black uppercase italic text-white mb-2 px-8"
-                  >
-                    {match.mvp.name}
-                  </motion.h2>
+                  <div className="space-y-3">
+                    {startingLineups[`team${idx + 1}`].map((player) => {
+                      const playerStats = Object.values(
+                        (window as any).lineupStatsCache?.[teamId] || {},
+                      ).find((p: any) => p.id === player.id) as any;
 
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="flex items-center justify-center gap-8 mt-6"
-                  >
-                    <div className="text-center">
-                      <div className="text-4xl font-black text-yellow-500">
-                        {match.mvp.points}
-                      </div>
-                      <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
-                        Total Points
-                      </div>
-                    </div>
-                  </motion.div>
+                      const raidPoints = parseInt(
+                        playerStats?.raid_points || "0",
+                      );
+                      const tacklePoints = parseInt(
+                        playerStats?.tackle_points || "0",
+                      );
+                      const totalPoints = parseInt(
+                        playerStats?.total_points || "0",
+                      );
+
+                      return (
+                        <div
+                          key={player.id}
+                          className={`flex items-center gap-3 p-3
+                                    bg-black/40 backdrop-blur-sm border border-white/5 rounded-xl
+                                    hover:bg-black/60 transition-all group
+                                    hover:border-${accentColor}-500/30
+                                    hover:shadow-[0_0_15px_-5px_rgba(${idx === 0 ? "239,68,68" : "59,130,246"},0.3)]`}
+                        >
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-900 flex-shrink-0 ring-1 ring-white/10">
+                            <img
+                              src={player.image}
+                              alt={player.name}
+                              className="w-full h-full object-cover object-top"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h4
+                              className={`font-bold text-white transition-colors
+                                          ${
+                                            idx === 0
+                                              ? "group-hover:text-red-400"
+                                              : "group-hover:text-blue-400"
+                                          }`}
+                            >
+                              {player.name}
+                            </h4>
+                            <p className="text-[10px] text-slate-500 uppercase font-bold">
+                              {player.role}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end text-sm font-black space-y-1 flex-shrink-0">
+                            <span className="text-red-400">
+                              ⚡ {raidPoints}
+                            </span>
+                            <span className="text-blue-400">
+                              🛡️ {tacklePoints}
+                            </span>
+                            <span className="text-white">⭐ {totalPoints}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              );
+            })}
           </div>
-        )}
-      </AnimatePresence>
-    </div>
+        </div>
+
+        {/* ── MVP Modal ── */}
+        <AnimatePresence>
+          {showMVP && match.mvp && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowMVP(false)}
+                className="absolute inset-0 bg-black/80 backdrop-blur-md"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5, rotateX: 90 }}
+                animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+                exit={{ opacity: 0, scale: 0.5, rotateX: -90 }}
+                className="relative w-full max-w-lg rounded-3xl overflow-hidden
+                         bg-slate-950/90 backdrop-blur-xl
+                         border border-yellow-500/30
+                         shadow-[0_0_80px_-10px_rgba(234,179,8,0.4)]"
+              >
+                {/* Ambient glow inside modal */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-yellow-500/15 rounded-full blur-3xl" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                </div>
+
+                <button
+                  onClick={() => setShowMVP(false)}
+                  className="absolute top-4 right-4 z-20 p-2 bg-black/50 backdrop-blur-sm rounded-full text-white hover:bg-white hover:text-black transition-colors border border-white/10"
+                >
+                  <X size={20} />
+                </button>
+
+                <div className="relative h-[500px] flex flex-col items-center justify-end pb-12">
+                  <motion.img
+                    initial={{ y: 100, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    src={match.mvp.image}
+                    alt={match.mvp.name}
+                    className="absolute top-0 h-[80%] object-contain z-10 drop-shadow-2xl"
+                  />
+
+                  <div className="relative z-20 text-center">
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      className="mb-2"
+                    >
+                      <span className="px-4 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-black uppercase tracking-widest rounded-full shadow-lg shadow-yellow-500/50">
+                        Match MVP
+                      </span>
+                    </motion.div>
+
+                    <motion.h2
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                      className="text-3xl font-black uppercase italic text-white mb-2 px-8"
+                    >
+                      {match.mvp.name}
+                    </motion.h2>
+
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                      className="flex items-center justify-center gap-8 mt-6"
+                    >
+                      <div className="text-center">
+                        <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
+                          {match.mvp.points}
+                        </div>
+                        <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                          Total Points
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </Layout>
   );
 };
 
