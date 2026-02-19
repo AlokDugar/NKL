@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ArrowUpRight } from "lucide-react";
 import { NAV_LINKS } from "../../data/mockData";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
@@ -68,6 +68,24 @@ const Header: React.FC = () => {
               />
             </Link>
           ))}
+
+          <a
+            href="/tickets"
+            className="group flex items-center gap-2 px-5 py-2.5 rounded-xl
+            bg-gradient-to-r from-red-600 to-blue-600
+            text-white text-xs font-black uppercase tracking-widest
+            shadow-lg shadow-red-900/30 hover:shadow-red-900/50
+            hover:scale-[1.04] transition-all duration-300"
+          >
+            <span className="transition-transform duration-300 group-hover:scale-110">
+              Join The Action
+            </span>
+
+            <ArrowUpRight
+              size={14}
+              className="transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-yellow-300"
+            />
+          </a>
         </nav>
 
         {/* Mobile Menu Button */}
@@ -119,6 +137,24 @@ const Header: React.FC = () => {
                       </Link>
                     </motion.div>
                   ))}
+
+                  <a
+                    href="/tickets"
+                    className="group flex items-center gap-2 px-5 py-3 rounded-xl
+                    bg-gradient-to-r from-red-600 to-blue-600
+                    text-white text-sm font-black uppercase tracking-widest
+                    shadow-lg shadow-red-900/30 w-fit
+                    transition-all duration-300"
+                  >
+                    <span className="transition-transform duration-300 group-hover:scale-110">
+                      Join The Action
+                    </span>
+
+                    <ArrowUpRight
+                      size={14}
+                      className="transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-yellow-300"
+                    />
+                  </a>
                 </nav>
               </motion.div>
             </motion.div>

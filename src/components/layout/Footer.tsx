@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  ArrowUpRight,
   Facebook,
   Instagram,
   Twitter,
   Youtube,
-  Mail,
-  MapPin,
-  Phone,
-  ArrowUpRight,
 } from "lucide-react";
 
 interface Partner {
@@ -41,14 +38,6 @@ const Footer = () => {
     "Standings",
     "Stats",
     "News",
-  ];
-  const fanZone = [
-    "Video Hub",
-    "Photo Gallery",
-    "Fan Choice",
-    "Ticket Booking",
-    "Merchandise",
-    "Fantasy League",
   ];
 
   return (
@@ -124,7 +113,7 @@ const Footer = () => {
           {/* ── Main grid ── */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-12 pb-12 border-b border-white/10">
             {/* Brand */}
-            <div className="md:col-span-4">
+            <div className="md:col-span-5">
               <img
                 src="https://nepalkabaddileague.com/nkl-logo.png"
                 alt="NKL Logo"
@@ -159,10 +148,22 @@ const Footer = () => {
                   </a>
                 ))}
               </div>
+              {/* Get In Touch CTA */}
+              <a
+                href="mailto:info@nepalkabaddileague.com"
+                className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
+             border border-white/15 bg-white/5 backdrop-blur-sm
+             text-white text-xs font-black uppercase tracking-widest
+             hover:bg-gradient-to-r hover:from-red-600 hover:to-blue-600
+             hover:border-transparent transition-all duration-300"
+              >
+                Get In Touch
+                <ArrowUpRight size={14} />
+              </a>
             </div>
 
             {/* Quick Links */}
-            <div className="md:col-span-2 md:col-start-6">
+            <div className="md:col-span-3 md:col-start-7">
               <h4 className="font-black text-sm uppercase tracking-widest text-white mb-6 flex items-center gap-2">
                 <span className="w-3 h-3 bg-gradient-to-br from-red-600 to-blue-600 rounded-sm rotate-45 block" />
                 Quick Links
@@ -180,73 +181,6 @@ const Footer = () => {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* Contact */}
-            <div className="md:col-span-3 md:col-start-10">
-              <h4 className="font-black text-sm uppercase tracking-widest text-white mb-6 flex items-center gap-2">
-                <span className="w-3 h-3 bg-gradient-to-br from-red-600 to-blue-600 rounded-sm rotate-45 block" />
-                Contact Us
-              </h4>
-
-              <ul className="space-y-5">
-                <li>
-                  <a
-                    href="https://maps.google.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start gap-3 group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-red-600/10 border border-red-600/20 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-red-600/20 transition-colors">
-                      <MapPin size={14} className="text-red-500" />
-                    </div>
-                    <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors leading-relaxed">
-                      Kathmandu, Nepal
-                      <br />
-                      Corporate Office
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="tel:+9771234567890"
-                    className="flex items-center gap-3 group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-600/20 transition-colors">
-                      <Phone size={14} className="text-blue-500" />
-                    </div>
-                    <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">
-                      +977 1234567890
-                    </span>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="mailto:info@nepalkabaddileague.com"
-                    className="flex items-center gap-3 group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-red-600/10 border border-red-600/20 flex items-center justify-center flex-shrink-0 group-hover:bg-red-600/20 transition-colors">
-                      <Mail size={14} className="text-red-500" />
-                    </div>
-                    <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">
-                      info@nepalkabaddileague.com
-                    </span>
-                  </a>
-                </li>
-              </ul>
-
-              {/* CTA */}
-              <a
-                href="mailto:info@nepalkabaddileague.com"
-                className="mt-8 flex items-center gap-2 px-5 py-3 rounded-xl
-                           bg-gradient-to-r from-red-600 to-blue-600
-                           text-white text-xs font-black uppercase tracking-widest
-                           shadow-lg shadow-red-900/30 hover:shadow-red-900/50
-                           hover:scale-[1.02] transition-all duration-300 w-fit"
-              >
-                Get In Touch
-                <ArrowUpRight size={14} />
-              </a>
             </div>
           </div>
 
