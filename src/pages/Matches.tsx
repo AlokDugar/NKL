@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, MapPin, Clock, Filter, Search } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  Filter,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import Layout from "../components/layout/Layout";
 import { Link } from "react-router-dom";
 
@@ -37,6 +45,9 @@ interface Season {
   name: string;
 }
 
+/* ---------- Constants ---------- */
+const ITEMS_PER_PAGE = 6;
+
 /* ---------- Component ---------- */
 const Matches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -50,14 +61,17 @@ const Matches = () => {
   const [selectedTeam, setSelectedTeam] = useState("ALL");
   const [searchDate, setSearchDate] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  /* ---------- Fetch ---------- */
   useEffect(() => {
     Promise.all([
       fetch(`${API_BASE_URL}/games`).then((r) => r.json()),
       fetch(`${API_BASE_URL}/seasons`).then((r) => r.json()),
     ])
       .then(([gamesRes, seasonsRes]) => {
-        // Sort matches by date descending
         const sortedMatches = (gamesRes.data || []).sort(
           (a: Match, b: Match) =>
             new Date(b.date).getTime() - new Date(a.date).getTime(),
@@ -69,6 +83,12 @@ const Matches = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  /* ---------- Reset page on filter ---------- */
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, selectedSeason, selectedTeam, searchDate]);
+
+  /* ---------- Status helper ---------- */
   const getMatchStatus = (match: Match) => {
     const s1 = Number(match.details?.first_team_score ?? 0);
     const s2 = Number(match.details?.second_team_score ?? 0);
@@ -78,20 +98,18 @@ const Matches = () => {
     return "UPCOMING";
   };
 
+  /* ---------- Filtering ---------- */
   const filteredMatches = matches.filter((match) => {
     const status = getMatchStatus(match);
 
-    // Status filter
     if (filterStatus !== "ALL" && status !== filterStatus) return false;
 
-    // Season filter
     if (
       selectedSeason !== "ALL" &&
       match.season_id?.toString() !== selectedSeason
     )
       return false;
 
-    // Team filter
     if (
       selectedTeam !== "ALL" &&
       match.first_team.id.toString() !== selectedTeam &&
@@ -99,34 +117,71 @@ const Matches = () => {
     )
       return false;
 
-    // Date filter
     if (searchDate && !match.date.includes(searchDate)) return false;
 
     return true;
   });
 
+  /* ---------- Pagination ---------- */
+  const totalPages = Math.ceil(filteredMatches.length / ITEMS_PER_PAGE);
+
+  const paginatedMatches = filteredMatches.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | "...")[] = [];
+
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    pages.push(1);
+
+    if (currentPage > 3) pages.push("...");
+
+    for (
+      let i = Math.max(2, currentPage - 1);
+      i <= Math.min(totalPages - 1, currentPage + 1);
+      i++
+    ) {
+      pages.push(i);
+    }
+
+    if (currentPage < totalPages - 2) pages.push("...");
+
+    pages.push(totalPages);
+
+    return pages;
+  };
+
+  /* ---------- Render ---------- */
   return (
     <Layout>
       <div className="pt-24 pb-20 min-h-screen bg-slate-950 text-white">
         <div className="container mx-auto px-4">
-          {/* ---------- Header ---------- */}
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
             <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tight mb-4">
-              <span className="inline-block pr-2 text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500 [text-shadow:0.06em_0_0_transparent]">
+              <span className="inline-block pr-2 text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-blue-500">
                 Match Schedule
               </span>
             </h1>
-
             <div className="h-1 w-24 mx-auto bg-gradient-to-r from-red-500 to-blue-500 -skew-x-12" />
           </motion.div>
 
-          {/* ---------- Filters ---------- */}
+          {/* Filters */}
           <div className="max-w-4xl mx-auto mb-8 space-y-4">
-            {/* Status Tabs */}
             <div className="flex justify-center gap-4 border-b border-white/10 pb-4">
               {(["ALL", "LIVE", "UPCOMING", "RECENT"] as const).map(
                 (status) => (
@@ -145,14 +200,13 @@ const Matches = () => {
               )}
             </div>
 
-            {/* Advanced Filters */}
             <div className="bg-slate-900/50 p-4 rounded-xl border border-white/10 flex flex-wrap gap-4 items-center justify-between">
               <div className="flex items-center gap-2 text-slate-400 text-sm font-bold uppercase">
                 <Filter size={16} /> Filters:
               </div>
 
               <div className="flex flex-wrap gap-4 flex-1 justify-end">
-                {/* Season Select */}
+                {/* Season */}
                 <select
                   value={selectedSeason}
                   onChange={(e) => setSelectedSeason(e.target.value)}
@@ -166,7 +220,7 @@ const Matches = () => {
                   ))}
                 </select>
 
-                {/* Team Select */}
+                {/* Team */}
                 <select
                   value={selectedTeam}
                   onChange={(e) => setSelectedTeam(e.target.value)}
@@ -187,7 +241,7 @@ const Matches = () => {
                   ))}
                 </select>
 
-                {/* Date Search */}
+                {/* Date */}
                 <div className="relative">
                   <Search
                     size={14}
@@ -205,18 +259,18 @@ const Matches = () => {
             </div>
           </div>
 
-          {/* ---------- Match List ---------- */}
+          {/* Match List */}
           <div className="max-w-4xl mx-auto space-y-8">
             {loading ? (
               <div className="text-center py-20 text-slate-400 font-bold">
                 Loading matches...
               </div>
-            ) : filteredMatches.length === 0 ? (
+            ) : paginatedMatches.length === 0 ? (
               <div className="text-center py-20 text-slate-500 font-bold uppercase">
                 No matches found
               </div>
             ) : (
-              filteredMatches.map((match, index) => {
+              paginatedMatches.map((match, index) => {
                 const s1 = Number(match.details?.first_team_score ?? 0);
                 const s2 = Number(match.details?.second_team_score ?? 0);
                 const statusLabel = getMatchStatus(match);
@@ -275,6 +329,50 @@ const Matches = () => {
               })
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-14">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 rounded-full border border-white/10 text-slate-400 hover:text-white hover:border-red-500/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              {getPageNumbers().map((page, i) =>
+                page === "..." ? (
+                  <span key={`ellipsis-${i}`} className="text-slate-500 px-1">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page as number)}
+                    className={`relative w-10 h-10 rounded-full text-sm font-bold transition-all duration-300 ${
+                      currentPage === page
+                        ? "text-white"
+                        : "text-slate-400 hover:text-white border border-white/10 hover:border-red-500/50"
+                    }`}
+                  >
+                    {currentPage === page && (
+                      <span className="absolute inset-0 rounded-full bg-gradient-to-r from-red-500 to-blue-500" />
+                    )}
+                    <span className="relative z-10">{page}</span>
+                  </button>
+                ),
+              )}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-full border border-white/10 text-slate-400 hover:text-white hover:border-red-500/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </Layout>
@@ -289,7 +387,7 @@ const TeamBlock = ({
   team: Team;
   align: "left" | "right";
 }) => (
-  <div className={`flex-1 flex flex-col items-center`}>
+  <div className="flex-1 flex flex-col items-center">
     <img
       src={team.logo}
       alt={team.name}

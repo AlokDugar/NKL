@@ -32,12 +32,12 @@ const Footer = () => {
   }, []);
 
   const quickLinks = [
-    "About Us",
-    "Teams",
-    "Matches",
-    "Standings",
-    "Stats",
-    "News",
+    { label: "Home", path: "/" },
+    { label: "About Us", path: "/about" },
+    { label: "Teams", path: "/team" },
+    { label: "Matches", path: "/schedule" },
+    { label: "Standings", path: "/standings" },
+    { label: "News", path: "/news" },
   ];
 
   return (
@@ -170,13 +170,13 @@ const Footer = () => {
               </h4>
               <ul className="space-y-3">
                 {quickLinks.map((item) => (
-                  <li key={item}>
+                  <li key={item.label}>
                     <Link
-                      to="#"
+                      to={item.path}
                       className="text-slate-500 hover:text-white transition-colors text-sm flex items-center gap-2 group"
                     >
                       <span className="w-0 group-hover:w-3 h-px bg-gradient-to-r from-red-500 to-blue-500 transition-all duration-300 overflow-hidden" />
-                      {item}
+                      {item.label}
                     </Link>
                   </li>
                 ))}

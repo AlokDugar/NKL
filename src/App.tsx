@@ -1,5 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ScrollToTop from "./components/common/ScrollToTop";
+
 import Home from "./pages/Home";
 import Matches from "./pages/Matches";
 import Teams from "./pages/Teams";
@@ -14,6 +16,7 @@ import VideoHub from "./pages/VideoHub";
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/schedule" element={<Matches />} />

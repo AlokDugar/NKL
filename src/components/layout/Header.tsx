@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ArrowUpRight } from "lucide-react";
-import { NAV_LINKS } from "../../data/mockData";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
@@ -15,6 +14,16 @@ const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const location = useLocation();
+
+  const NAV_LINKS = [
+    { name: "Home", path: "/"},
+    { name: "Matches", path: "/schedule" },
+    { name: "Teams", path: "/team"},
+    { name: "Standings", path: "/standings"},
+    { name: "Video Hub", path: "/videohub"},
+    { name: "News", path: "/news"},
+    { name: "About", path: "/about"},
+  ];
 
   const isActive = (path: string) => location.pathname === path;
 
