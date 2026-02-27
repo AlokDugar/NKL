@@ -2,15 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Layout from "../components/layout/Layout";
-
-interface NewsItem {
-  id: number;
-  title: string;
-  category: string;
-  image: string;
-  date: string;
-  created_at: string;
-}
+import { fetchNews, type NewsItem } from "../api";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -18,29 +10,11 @@ const News = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/items?category_slug=news&category_id=74`)
-      .then((res) => res.json())
-      .then((res) => {
-        const items = (res.data?.data || []).map((item: any) => ({
-          id: item.id,
-          title: item.name,
-          category: item.category?.name,
-          image: item.photo,
-          date: item.created_at,
-          created_at: item.created_at,
-        }));
-
-        items.sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        );
-
-        setNews(items);
-      })
-      .catch((err) => console.error("Error fetching news:", err))
+    fetchNews()
+      .then(setNews)
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
@@ -57,9 +31,8 @@ const News = () => {
 
   const getPageNumbers = () => {
     const pages: (number | "...")[] = [];
-    if (totalPages <= 7) {
+    if (totalPages <= 7)
       return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
     pages.push(1);
     if (currentPage > 3) pages.push("...");
     for (
@@ -93,7 +66,6 @@ const News = () => {
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
-              {/* Circular gradient spinner */}
               <div className="relative w-16 h-16">
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-red-500 to-blue-500 animate-spin [mask:radial-gradient(farthest-side,transparent_60%,black_60%)]" />
               </div>
@@ -132,11 +104,9 @@ const News = () => {
                         <Calendar className="w-3 h-3 mr-1" />
                         {item.date}
                       </div>
-
                       <h3 className="text-xl font-bold text-white leading-tight mb-4 group-hover:text-red-500 transition-colors line-clamp-3 flex-1">
                         {item.title}
                       </h3>
-
                       <button className="text-sm font-bold uppercase tracking-wider text-slate-400 group-hover:text-white flex items-center transition-colors mt-auto">
                         Read More{" "}
                         <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" />
@@ -148,10 +118,8 @@ const News = () => {
                 ))}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-14">
-                  {/* Prev */}
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
@@ -160,7 +128,6 @@ const News = () => {
                     <ChevronLeft className="w-5 h-5" />
                   </button>
 
-                  {/* Page numbers */}
                   {getPageNumbers().map((page, i) =>
                     page === "..." ? (
                       <span
@@ -187,7 +154,6 @@ const News = () => {
                     ),
                   )}
 
-                  {/* Next */}
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}

@@ -3,66 +3,29 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import CountUp from "react-countup";
 import { ArrowRight } from "lucide-react";
-
-interface Game {
-  id: number;
-  match_number: string;
-  winner_id: number;
-  status: number;
-  first_half_start_time: string;
-  second_half_end_time: string;
-  total_points: number;
-  total_score_diff: number;
-  stat: string;
-}
-
-interface Team {
-  id: number;
-  logo: string;
-  name: string;
-  slug: string;
-  primary_color: string;
-  total_points: number;
-  total_score_diff: number;
-  total_matches: number;
-  total_wins: number;
-  total_draws: number;
-  total_losses: number;
-  games: Game[];
-  previous_game?: Game | null;
-  next_game?: Game | null;
-}
+import { fetchLatestStandings, type StandingTeam } from "../../api";
 
 const StandingsSection = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<StandingTeam[]>([]);
   const [loading, setLoading] = useState(true);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/standings`)
-      .then((res) => res.json())
-      .then((data) => {
-        const sorted = (data.data || []).sort(
-          (a: Team, b: Team) => b.total_points - a.total_points,
-        );
-        setTeams(sorted);
-      })
+    // fetchLatestStandings automatically resolves the latest season
+    fetchLatestStandings()
+      .then(({ standings }) => setTeams(standings))
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <section className="py-20 bg-slate-950 relative overflow-hidden">
-      {/* ── Background — same palette as footer, glows bleed downward ── */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Matches the footer's top-left/top-right glow pattern so they feel continuous */}
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-red-600/10 blur-[150px] rounded-full" />
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[150px] rounded-full" />
-        {/* Fade at the very bottom so it dissolves into footer */}
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent to-slate-950" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div>
             <motion.span
@@ -104,7 +67,6 @@ const StandingsSection = () => {
           </motion.div>
         </div>
 
-        {/* Table */}
         <div className="bg-black/30 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_0_60px_-15px_rgba(220,38,38,0.15),0_0_60px_-15px_rgba(37,99,235,0.15)]">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -143,17 +105,15 @@ const StandingsSection = () => {
                       className="border-b border-white/5 last:border-0 hover:bg-gradient-to-r hover:from-red-900/10 hover:to-blue-900/10 transition-colors group"
                     >
                       <td className="p-6">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm ${
-                              index < 4
-                                ? "bg-green-500/15 border border-green-500/50 text-green-400"
-                                : "bg-white/10 text-white"
-                            }`}
-                          >
-                            {index + 1}
-                          </span>
-                        </div>
+                        <span
+                          className={`w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm ${
+                            index < 4
+                              ? "bg-green-500/15 border border-green-500/50 text-green-400"
+                              : "bg-white/10 text-white"
+                          }`}
+                        >
+                          {index + 1}
+                        </span>
                       </td>
                       <td className="p-6">
                         <div className="flex items-center gap-4">

@@ -1,4 +1,3 @@
-import { Trophy, Calendar, Users, Award, Video, Newspaper } from 'lucide-react';
 
 export const ABOUT_CONTENT = {
   title: "Astrionix Management Pvt. Ltd.",
@@ -335,16 +334,6 @@ export const TEAMS = [
   },
 ];
 
-// STANDINGS
-export const STANDINGS = [
-  { rank: 1, teamId: "janakpur-knights", points: 23, played: 10, won: 7, lost: 2, draw: 1 },
-  { rank: 2, teamId: "biratnagar-bandits", points: 21, played: 10, won: 6, lost: 3, draw: 1 },
-  { rank: 3, teamId: "kathmandu-mavericks", points: 19, played: 10, won: 6, lost: 4, draw: 0 },
-  { rank: 4, teamId: "dhangadi-wild-cats", points: 11, played: 10, won: 3, lost: 6, draw: 1 },
-  { rank: 5, teamId: "himalayan-raiders", points: 7, played: 10, won: 2, lost: 7, draw: 1 },
-  { rank: 6, teamId: "pokhara-lakers", points: 4, played: 10, won: 1, lost: 8, draw: 1 },
-];
-
 export const SEASON_DATA = {
   season: "12",
   topRaider: {
@@ -376,91 +365,6 @@ export const SEASON_DATA = {
     { label: "All Outs", value: "308" },
   ],
 }
-
-// MATCHES
-export const MATCHES = [
-  { 
-    id: "final", 
-    type: "Final", 
-    team1: "janakpur-knights", 
-    team2: "kathmandu-mavericks", 
-    score1: 45, 
-    score2: 41, 
-    status: "FT", 
-    date: "Jan 31, 2025", 
-    time: "6:30 PM", 
-    venue: "NSC Covered Hall",
-    mvp: { playerId: 15, name: "RAHUL CHAUDHARY", image: "https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/players/rahul-kumar-1/photo/rahul-kumar-12025-01-13-130731.png", points: 18 },
-    stats: {
-      team1: { raidPoints: 25, tacklePoints: 15, allOutPoints: 4, extraPoints: 1 },
-      team2: { raidPoints: 22, tacklePoints: 12, allOutPoints: 4, extraPoints: 3 }
-    }
-  },
-  { 
-    id: "q2", 
-    type: "Qualifier 2", 
-    team1: "biratnagar-bandits", 
-    team2: "kathmandu-mavericks", 
-    score1: 26, 
-    score2: 48, 
-    status: "FT", 
-    date: "Jan 29, 2025", 
-    time: "6:30 PM", 
-    venue: "NSC Covered Hall",
-    mvp: { playerId: 1, name: "GHANSHYAM ROKA MAGAR", image: "https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/players/ghanshyam-roka/photo/ghanshyam-roka2025-01-13-140204.png", points: 22 },
-    stats: {
-      team1: { raidPoints: 15, tacklePoints: 8, allOutPoints: 2, extraPoints: 1 },
-      team2: { raidPoints: 28, tacklePoints: 14, allOutPoints: 4, extraPoints: 2 }
-    }
-  },
-  { 
-    id: "elim", 
-    type: "Eliminator", 
-    team1: "kathmandu-mavericks", 
-    team2: "dhangadi-wild-cats", 
-    score1: 50, 
-    score2: 45, 
-    status: "FT", 
-    date: "Jan 27, 2025", 
-    time: "6:30 PM", 
-    venue: "NSC Covered Hall",
-    mvp: { playerId: 6, name: "RAHUL KUMAR RAY", image: "https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/players/rahul-kumar-1/photo/rahul-kumar-12025-01-13-130731.png", points: 15 },
-    stats: {
-      team1: { raidPoints: 30, tacklePoints: 12, allOutPoints: 6, extraPoints: 2 },
-      team2: { raidPoints: 28, tacklePoints: 10, allOutPoints: 4, extraPoints: 3 }
-    }
-  },
-  { id: "q1", type: "Qualifier 1", team1: "janakpur-knights", team2: "biratnagar-bandits", score1: 34, score2: 32, status: "FT", date: "Jan 27, 2025", time: "5:30 PM", venue: "NSC Covered Hall" },
-  { id: "l15", type: "League", team1: "pokhara-lakers", team2: "biratnagar-bandits", score1: 25, score2: 50, status: "FT", date: "Jan 25, 2025", time: "6:30 PM", venue: "NSC Covered Hall" },
-  { id: "l14", type: "League", team1: "himalayan-raiders", team2: "dhangadi-wild-cats", score1: 38, score2: 41, status: "FT", date: "Jan 25, 2025", time: "5:30 PM", venue: "NSC Covered Hall" },
-];
-
-// NEWS
-export const NEWS = [
-  { id: 1, title: "Janakpur Knights Crowned Champions in a Thrilling 45-41 Victory Over Kathmandu Mavericks !!", image: "https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/items/janakpur-knights-crowned-champions-in-a-thrilling-45-41-victory-over-kathmandu-mavericks/janakpur-knights-crowned-champions-in-a-thrilling-45-41-victory-over-kathmandu-mavericks2025-02-01-230832.jpg", category: "News", date: "Feb 01, 2025" },
-  { id: 2, title: "Kathmandu Mavericks Become the Second Finalist after winning Against Biratnagar Bandits by 48-26", image: "https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/items/kathmandu-mavericks-become-the-second-finalist-after-winning-against-biratnagar-bandits-by-48-26/kathmandu-mavericks-become-the-second-finalist-after-winning-against-biratnagar-bandits-by-48-262025-01-30-084856.jpg", category: "News", date: "Jan 30, 2025" },
-  { id: 3, title: "Kathmandu Mavericks won by 50-45 Against Dhangadi Wild Cats in High-Scoring Clash", image: "https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/items/kathmandu-mavericks-won-by-50-45-against-dhangadi-wild-cats-in-high-scoring-clash/kathmandu-mavericks-won-by-50-45-against-dhangadi-wild-cats-in-high-scoring-clash2025-01-29-203513.JPG", category: "News", date: "..." },
-];
-
-
-export const PARTNERS = [
-  { name: 'KB SAM', role: 'Title Sponsor', logo: 'https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/partners/kb-sam2025-01-14-184515.jpg' },
-  { name: 'Begani Group', role: 'Brought to you by', logo: 'https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/partners/brough-to-you-by2025-01-14-185643.jpg' },
-  { name: 'Astrionix', role: 'Organized by', logo: 'https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/partners/organised-by2025-01-15-105438.jpg' },
-  { name: 'Khalti', role: 'Ticketing Partner', logo: 'https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/partners/ticketing-partner2025-01-14-185948.jpg' },
-  { name: 'Nabil Bank', role: 'Banking Partner', logo: 'https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/partners/banking-partner2025-01-14-190155.jpg' },
-  { name: 'WorldLink', role: 'Connectivity Partner', logo: 'https://nepal-kabaddi-league.s3.ap-southeast-1.amazonaws.com/media/partners/connectivity-partner2025-01-17-105555.jpg' },
-];
-
-export const NAV_LINKS = [
-  { name: 'Home', path: '/', icon: Trophy },
-  { name: 'Matches', path: '/schedule', icon: Calendar },
-  { name: 'Teams', path: '/team', icon: Users },
-  { name: 'Standings', path: '/standings', icon: Award },
-  { name: 'Video Hub', path: '/videohub', icon: Video },
-  { name: 'News', path: '/news', icon: Newspaper },
-  { name: 'About', path: '/about', icon: Users },
-];
 
 export const HERO_IMAGES = [
   './1.png',

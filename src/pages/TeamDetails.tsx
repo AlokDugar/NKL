@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import React, { useEffect, useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import {
   Globe,
@@ -24,6 +25,17 @@ import {
   Radar,
   CartesianGrid,
 } from "recharts";
+import {
+  fetchTeam,
+  fetchSeasons,
+  fetchSquad,
+  fetchTeamStats,
+  getLatestSeason,
+  type Team,
+  type Season,
+  type SquadPlayer,
+  type TeamStats,
+} from "../api";
 
 const chartStyles = `
   .recharts-default-tooltip { background: rgba(2,6,23,0.92) !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 12px !important; backdrop-filter: blur(12px) !important; }
@@ -31,101 +43,55 @@ const chartStyles = `
   .recharts-tooltip-item { color: #ccc !important; }
 `;
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const percent = (num: number, den: number) => (den > 0 ? (num / den) * 100 : 0);
+const avg = (total: number, matches: number) =>
+  matches > 0 ? total / matches : 0;
 
 const TeamDetails = () => {
-  const { slug } = useParams();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [team, setTeam] = useState(null);
-  const [players, setPlayers] = useState([]);
-  const [squadData, setSquadData] = useState(null);
-  const [seasons, setSeasons] = useState([]);
-  const [selectedSeason, setSelectedSeason] = useState("");
+
+  const [team, setTeam] = useState<Team | null>(null);
+  const [players, setPlayers] = useState<SquadPlayer[]>([]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<number | "">("");
+  const [teamStats, setTeamStats] = useState<TeamStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("overview");
-  const [teamStats, setTeamStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
-  const percent = (num, den) => (den > 0 ? (num / den) * 100 : 0);
-  const avg = (total, matches) => (matches > 0 ? total / matches : 0);
-
+  // Fetch team + seasons on mount
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const teamRes = await fetch(`${API_BASE_URL}/teams/${slug}`);
-        if (!teamRes.ok) throw new Error("Team not found");
-        const teamData = await teamRes.json();
-        setTeam(teamData.data);
-
-        const seasonsRes = await fetch(`${API_BASE_URL}/seasons`);
-        const seasonsData = await seasonsRes.json();
-        setSeasons(seasonsData.data || []);
-        if (seasonsData.data?.length > 0) {
-          setSelectedSeason(seasonsData.data[0].id);
-        }
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-    if (slug) fetchData();
+    if (!slug) return;
+    setLoading(true);
+    Promise.all([fetchTeam(slug), fetchSeasons()])
+      .then(([teamData, seasonData]) => {
+        setTeam(teamData);
+        setSeasons(seasonData);
+        const latest = getLatestSeason(seasonData);
+        if (latest) setSelectedSeason(latest.id);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, [slug]);
 
+  // Fetch squad whenever team or season changes
   useEffect(() => {
-    const fetchSquadPlayers = async () => {
-      if (!slug || !selectedSeason) return;
-      try {
-        const squadRes = await fetch(
-          `${API_BASE_URL}/squads?team_slug=${slug}&season_id=${selectedSeason}`,
-        );
-        const squadData = await squadRes.json();
-        if (squadData.data?.data?.[0]) {
-          const squad = squadData.data.data[0];
-          setSquadData(squad);
-          if (squad.players) {
-            const squadPlayers = squad.players.map((p) => ({
-              ...p.player,
-              jersey: p.jersey,
-              isCaptain: p.player.id === squad.captain,
-              isSubCaptain: p.player.id === squad.sub_captain,
-            }));
-            setPlayers(squadPlayers);
-          } else {
-            setPlayers([]);
-          }
-        } else {
-          setPlayers([]);
-          setSquadData(null);
-        }
-      } catch (err) {
-        setPlayers([]);
-        setSquadData(null);
-      }
-    };
-    fetchSquadPlayers();
+    if (!slug || !selectedSeason) return;
+    fetchSquad(slug, selectedSeason as number)
+      .then(setPlayers)
+      .catch(() => setPlayers([]));
   }, [slug, selectedSeason]);
 
+  // Fetch team stats whenever team id or season changes
   useEffect(() => {
-    const fetchTeamStats = async () => {
-      if (!team?.id || !selectedSeason) return;
-      try {
-        setLoadingStats(true);
-        const statsRes = await fetch(
-          `${API_BASE_URL}/team-stats?team_id=${team.id}&season_id=${selectedSeason}`,
-        );
-        const statsData = await statsRes.json();
-        setTeamStats(statsData.data?.[0] || null);
-        setLoadingStats(false);
-      } catch (err) {
-        setTeamStats(null);
-        setLoadingStats(false);
-      }
-    };
-    fetchTeamStats();
+    if (!team?.id || !selectedSeason) return;
+    setLoadingStats(true);
+    fetchTeamStats(team.id, selectedSeason as number)
+      .then(setTeamStats)
+      .catch(() => setTeamStats(null))
+      .finally(() => setLoadingStats(false));
   }, [team?.id, selectedSeason]);
 
   const radarData = useMemo(() => {
@@ -200,37 +166,27 @@ const TeamDetails = () => {
       <div className="min-h-screen bg-slate-950 text-white font-sans relative overflow-x-hidden">
         <style>{chartStyles}</style>
 
-        {/* ── Global ambient glows ── */}
         <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/20 to-slate-950" />
         </div>
 
-        {/* ── Hero ── */}
+        {/* Hero */}
         <div className="relative h-[65vh] md:h-[75vh] w-full overflow-hidden z-10">
-          {/* Team image — much lighter overlay so it's actually visible */}
           <div
             className="absolute inset-0 bg-center bg-no-repeat bg-contain opacity-60"
             style={{
               backgroundImage: `url(${team.featured_img || team.logo})`,
             }}
           />
-
-          {/* Clean fade — bottom only, no colour tint */}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
           <div className="absolute bottom-0 left-0 w-full p-6 md:p-16 z-10">
             <div className="container mx-auto flex flex-col md:flex-row items-end gap-8">
-              {/* Logo bubble */}
-              <div
-                className="w-32 h-32 md:w-48 md:h-48 bg-black/50 backdrop-blur-xl rounded-full p-4
-                            border-2 border-white/20
-                            shadow-[0_0_40px_rgba(0,0,0,0.6)]
-                            flex items-center justify-center relative overflow-hidden group flex-shrink-0"
-              >
+              <div className="w-32 h-32 md:w-48 md:h-48 bg-black/50 backdrop-blur-xl rounded-full p-4 border-2 border-white/20 shadow-[0_0_40px_rgba(0,0,0,0.6)] flex items-center justify-center flex-shrink-0">
                 <img
                   src={team.logo}
                   alt={team.name}
-                  className="w-full h-full object-contain relative z-10 drop-shadow-2xl"
+                  className="w-full h-full object-contain drop-shadow-2xl"
                 />
               </div>
 
@@ -257,11 +213,7 @@ const TeamDetails = () => {
                   )}
                 </div>
 
-                <h1
-                  className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4
-                             text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-slate-400
-                             drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]"
-                >
+                <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-slate-400 drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)]">
                   {team.name}
                 </h1>
 
@@ -282,8 +234,7 @@ const TeamDetails = () => {
                         href={team.social_links.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10
-                               hover:bg-white/10 hover:border-white/20 transition-all group"
+                        className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all group"
                       >
                         <Globe
                           size={16}
@@ -302,8 +253,8 @@ const TeamDetails = () => {
           </div>
         </div>
 
-        {/* ── Sticky Nav ── */}
-        <div className="bg-black/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-40 shadow-2xl relative">
+        {/* Sticky Nav */}
+        <div className="bg-black/60 backdrop-blur-md border-b border-white/10 sticky top-0 z-40 shadow-2xl">
           <div className="container mx-auto px-4 md:px-16">
             <div className="flex overflow-x-auto gap-8 no-scrollbar">
               {["overview", "players", "stats"].map((tab) => (
@@ -326,19 +277,16 @@ const TeamDetails = () => {
           </div>
         </div>
 
-        {/* ── Content ── */}
+        {/* Content */}
         <div className="container mx-auto px-4 md:px-16 py-12 relative z-10">
-          {/* Overview tab — About section */}
+          {/* About */}
           {activeTab === "overview" && team.description && (
             <div className="mb-16">
               <h2 className="text-4xl font-black uppercase italic tracking-tighter flex items-center gap-4 mb-8">
                 <span className="w-3 h-10 bg-gradient-to-b from-red-600 to-blue-600 block skew-x-[-15deg]" />
                 About {team.name}
               </h2>
-              <div
-                className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8
-                            shadow-[0_0_30px_-10px_rgba(220,38,38,0.2)]"
-              >
+              <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-[0_0_30px_-10px_rgba(220,38,38,0.2)]">
                 <p className="text-slate-300 leading-relaxed whitespace-pre-line">
                   {team.description}
                 </p>
@@ -346,7 +294,7 @@ const TeamDetails = () => {
             </div>
           )}
 
-          {/* Squad section */}
+          {/* Squad */}
           {(activeTab === "overview" || activeTab === "players") && (
             <>
               <div className="flex items-center justify-between mb-10">
@@ -396,12 +344,7 @@ const TeamDetails = () => {
                       state={{ teamSlug: slug, jersey: player.jersey }}
                       className="group relative block"
                     >
-                      <div
-                        className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden
-                                    hover:border-red-500/40 transition-all duration-500
-                                    hover:shadow-[0_0_40px_-5px_rgba(220,38,38,0.3)]
-                                    hover:-translate-y-2 cursor-pointer"
-                      >
+                      <div className="bg-black/40 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden hover:border-red-500/40 transition-all duration-500 hover:shadow-[0_0_40px_-5px_rgba(220,38,38,0.3)] hover:-translate-y-2 cursor-pointer">
                         <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950">
                           <img
                             src={player.photo}
@@ -480,7 +423,7 @@ const TeamDetails = () => {
             </>
           )}
 
-          {/* Stats section */}
+          {/* Stats */}
           {(activeTab === "overview" || activeTab === "stats") && (
             <>
               <div className="h-16" />
@@ -528,7 +471,7 @@ const TeamDetails = () => {
                 </div>
               ) : (
                 <>
-                  {/* Summary stat pills */}
+                  {/* Summary pills */}
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
                     {[
                       {
@@ -581,10 +524,7 @@ const TeamDetails = () => {
 
                   {/* Charts */}
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                    <div
-                      className="bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 lg:col-span-2
-                                  shadow-[0_0_30px_-10px_rgba(220,38,38,0.2)]"
-                    >
+                    <div className="bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 lg:col-span-2 shadow-[0_0_30px_-10px_rgba(220,38,38,0.2)]">
                       <h3 className="text-lg font-bold uppercase mb-6 flex items-center gap-2">
                         <Activity size={18} className="text-red-500" /> Match
                         Results
@@ -653,10 +593,7 @@ const TeamDetails = () => {
                       </ResponsiveContainer>
                     </div>
 
-                    <div
-                      className="bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10
-                                  shadow-[0_0_30px_-10px_rgba(37,99,235,0.2)]"
-                    >
+                    <div className="bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10 shadow-[0_0_30px_-10px_rgba(37,99,235,0.2)]">
                       <h3 className="font-bold uppercase mb-4 flex items-center gap-2">
                         <Shield size={18} className="text-blue-500" /> Team
                         Balance
@@ -675,7 +612,7 @@ const TeamDetails = () => {
                             fillOpacity={0.35}
                           />
                           <Tooltip
-                            formatter={(value, name, props) => {
+                            formatter={(value: any, name: any, props: any) => {
                               const { type } = props.payload;
                               if (type === "points")
                                 return [`${(value / 10).toFixed(2)} pts`, name];
@@ -690,19 +627,12 @@ const TeamDetails = () => {
                   {/* Attack & Defence */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Attack */}
-                    <div
-                      className="bg-black/40 backdrop-blur-xl p-8 border border-white/10 rounded-2xl relative overflow-hidden
-                                  shadow-[0_0_40px_-10px_rgba(220,38,38,0.25)]"
-                    >
+                    <div className="bg-black/40 backdrop-blur-xl p-8 border border-white/10 rounded-2xl relative overflow-hidden shadow-[0_0_40px_-10px_rgba(220,38,38,0.25)]">
                       <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/8 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                      {/* Gradient accent top */}
                       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-red-600 via-orange-500 to-transparent rounded-t-2xl" />
 
                       <div className="flex items-center gap-4 mb-8 border-b border-white/10 pb-6">
-                        <div
-                          className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20
-                                      shadow-[0_0_15px_rgba(239,68,68,0.3)]"
-                        >
+                        <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.3)]">
                           <Swords size={24} />
                         </div>
                         <div>
@@ -798,18 +728,12 @@ const TeamDetails = () => {
                     </div>
 
                     {/* Defence */}
-                    <div
-                      className="bg-black/40 backdrop-blur-xl p-8 border border-white/10 rounded-2xl relative overflow-hidden
-                                  shadow-[0_0_40px_-10px_rgba(37,99,235,0.25)]"
-                    >
+                    <div className="bg-black/40 backdrop-blur-xl p-8 border border-white/10 rounded-2xl relative overflow-hidden shadow-[0_0_40px_-10px_rgba(37,99,235,0.25)]">
                       <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/8 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
                       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-600 via-cyan-500 to-transparent rounded-t-2xl" />
 
                       <div className="flex items-center gap-4 mb-8 border-b border-white/10 pb-6">
-                        <div
-                          className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20
-                                      shadow-[0_0_15px_rgba(59,130,246,0.3)]"
-                        >
+                        <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
                           <Shield size={24} />
                         </div>
                         <div>

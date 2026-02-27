@@ -4,52 +4,25 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import { motion } from "framer-motion";
 import { ArrowRight, Calendar, Clock } from "lucide-react";
+import { fetchNews, type NewsItem } from "../../api";
 
-// Import Swiper styles
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-interface NewsItem {
-  id: number;
-  title: string;
-  category: string;
-  image: string;
-  date: string;
-  created_at: string;
-}
-
 const NewsSection = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
-    fetch(`${API_BASE_URL}/items?category_slug=news&category_id=74`)
-      .then((res) => res.json())
-      .then((res) => {
-        const items = (res.data?.data || []).map((item: any) => ({
-          id: item.id,
-          title: item.name, // map name → title
-          category: item.category?.name, // map category object → name string
-          image: item.photo, // map photo → image
-          date: item.created_at, // you can format this later
-          created_at: item.created_at,
-        }));
-
-        items.sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        );
-
-        setNews(items.slice(0, 3));
-      })
-      .catch((err) => console.error("Error fetching news:", err))
+    fetchNews()
+      .then((items) => setNews(items.slice(0, 3)))
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <section className="py-20 bg-zinc-900 relative overflow-hidden">
-      {/* Background Elements */}
       <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-red-900/20 to-transparent pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-t from-blue-900/20 to-transparent pointer-events-none" />
 
@@ -76,10 +49,7 @@ const NewsSection = () => {
             </motion.h2>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-          >
+          <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }}>
             <Link
               to="/news"
               className="group flex items-center gap-2 text-white font-bold uppercase tracking-wider hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-red-500 hover:to-blue-500 transition-all"
@@ -94,9 +64,7 @@ const NewsSection = () => {
         </div>
 
         {loading ? (
-          <div className="text-center text-white py-12 font-bold">
-            Loading news...
-          </div>
+          <div className="text-center text-white py-12 font-bold">Loading news...</div>
         ) : (
           <Swiper
             modules={[Navigation, Pagination]}
@@ -118,7 +86,6 @@ const NewsSection = () => {
                   transition={{ delay: index * 0.1 }}
                   className="group relative bg-black border border-white/10 rounded-xl overflow-hidden h-full hover:border-transparent transition-all duration-300 hover:shadow-2xl hover:shadow-red-900/20"
                 >
-                  {/* Gradient Border on Hover */}
                   <div className="absolute inset-0 rounded-xl p-[1px] bg-gradient-to-r from-red-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
                   <div className="aspect-[16/10] overflow-hidden relative rounded-t-xl">

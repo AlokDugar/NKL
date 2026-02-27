@@ -3,63 +3,34 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Calendar, ArrowRight } from "lucide-react";
 import clsx from "clsx";
+import { fetchMatches, type Match } from "../../api";
 
-/* ---------- Types ---------- */
-interface Team {
-  id: number;
-  name: string;
-  logo: string;
-}
+const typePriority: Record<string, number> = {
+  Final: 1,
+  "Semi Final": 2,
+  "Quarter Final": 3,
+  Qualifier: 4,
+  Eliminator: 5,
+  League: 6,
+};
 
-interface MatchDetails {
-  first_team_score?: number;
-  second_team_score?: number;
-  status?: number; // 1 = finished
-}
-
-interface Stadium {
-  name: string;
-}
-
-interface Match {
-  id: number;
-  type: string;
-  date: string;
-  first_team: Team;
-  second_team: Team;
-  details?: MatchDetails;
-  stadium?: Stadium;
-}
-
-/* ---------- Component ---------- */
 const MatchesSection = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/games`)
-      .then((res) => res.json())
-      .then((res) => {
-        const typePriority: Record<string, number> = {
-          Final: 1,
-          "Semi Final": 2,
-          "Quarter Final": 3,
-          Qualifier: 4,
-          Eliminator: 5,
-          League: 6,
-        };
 
-        const sorted = [...res.data].sort((a, b) => {
+  useEffect(() => {
+    fetchMatches()
+      .then((data) => {
+        const sorted = [...data].sort((a, b) => {
           const pA = typePriority[a.type] ?? 10;
           const pB = typePriority[b.type] ?? 10;
           if (pA !== pB) return pA - pB;
           return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
-
         setMatches(sorted.slice(0, 6));
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -114,7 +85,6 @@ const MatchesSection = () => {
           {matches.map((match, index) => {
             const s1 = Number(match.details?.first_team_score ?? 0);
             const s2 = Number(match.details?.second_team_score ?? 0);
-
             const statusLabel =
               match.details?.status === 1
                 ? "Finished"
@@ -132,10 +102,8 @@ const MatchesSection = () => {
                 className="relative rounded-2xl bg-zinc-900/60 border border-white/10 overflow-hidden group
                            hover:shadow-[0_0_40px_-5px_rgba(255,0,0,0.3)] transition-all duration-300"
               >
-                {/* Hover border */}
                 <div className="absolute inset-0 rounded-2xl p-[1px] opacity-0 group-hover:opacity-100 bg-gradient-to-r from-red-500 to-blue-500" />
 
-                {/* Header */}
                 <div className="relative z-10 bg-white/5 px-6 py-4 border-b border-white/10 flex justify-between">
                   <span className="text-xs font-bold uppercase bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-blue-400">
                     {match.type}
@@ -152,7 +120,6 @@ const MatchesSection = () => {
                   </div>
                 </div>
 
-                {/* Content */}
                 <div className="relative p-10">
                   <div className="absolute inset-0 flex items-center justify-center opacity-[0.04]">
                     <span className="text-[160px] font-black bg-gradient-to-r from-red-500 to-blue-600 bg-clip-text text-transparent">
@@ -161,10 +128,8 @@ const MatchesSection = () => {
                   </div>
 
                   <div className="relative flex items-center justify-between">
-                    {/* Team 1 */}
                     <TeamBlock team={match.first_team} glow="red" />
 
-                    {/* Score */}
                     <div className="flex flex-col items-center px-6">
                       <div className="flex gap-6 mb-2">
                         <span
@@ -187,18 +152,15 @@ const MatchesSection = () => {
                           {s2}
                         </span>
                       </div>
-
                       <span className="px-4 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-red-600 to-blue-600 text-white">
                         {statusLabel}
                       </span>
                     </div>
 
-                    {/* Team 2 */}
                     <TeamBlock team={match.second_team} glow="blue" />
                   </div>
                 </div>
 
-                {/* Footer */}
                 <div className="relative z-10 bg-white/5 px-6 py-4 border-t border-white/10 group-hover:bg-gradient-to-r group-hover:from-red-600 group-hover:to-blue-600 transition-all flex justify-center">
                   <Link
                     to={`/matches/${match.id}`}
@@ -213,7 +175,6 @@ const MatchesSection = () => {
           })}
         </div>
 
-        {/* CTA */}
         <div className="text-center mt-14">
           <Link
             to="/schedule"
@@ -228,8 +189,13 @@ const MatchesSection = () => {
   );
 };
 
-/* ---------- Team Block ---------- */
-const TeamBlock = ({ team, glow }: { team: Team; glow: "red" | "blue" }) => (
+const TeamBlock = ({
+  team,
+  glow,
+}: {
+  team: { name: string; logo: string };
+  glow: "red" | "blue";
+}) => (
   <div className="flex flex-col items-center flex-1 gap-4">
     <div className="relative w-24 h-24">
       <div

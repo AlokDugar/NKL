@@ -11,7 +11,6 @@ import {
   Trophy,
 } from "lucide-react";
 import Layout from "../components/layout/Layout";
-
 import {
   PieChart,
   Pie,
@@ -23,118 +22,124 @@ import {
   PolarAngleAxis,
   Radar,
 } from "recharts";
+import {
+  fetchPlayer,
+  fetchSeasons,
+  fetchPlayerStats,
+  getLatestSeason,
+  type Player,
+  type Season,
+  type PlayerStats,
+} from "../api";
+
+interface TeamHistoryEntry {
+  season_id: number;
+  season_name: string;
+  team_name: string;
+  team_logo_url: string;
+  total_points: number;
+  successful_raids: number;
+  successful_tackles: number;
+}
+
+interface TransformedStats {
+  total_points: number;
+  raid_points: number;
+  tackle_points: number;
+  matches: number;
+  successful_raids: number;
+  successful_tackles: number;
+  super_raids: number;
+  super_tackles: number;
+  do_or_die_points: number;
+  empty_raids: number;
+  super_10s: number;
+  super_5s: number;
+  avg_raid_points: number;
+  team_name: string;
+  team_logo_url: string;
+  team_slug: string;
+}
+
+const transformStats = (raw: PlayerStats): TransformedStats => ({
+  total_points: parseInt(raw.total_points) || 0,
+  raid_points: parseInt(raw.raid_points) || 0,
+  tackle_points: parseInt(raw.tackle_points) || 0,
+  matches: parseInt(raw.gameCount) || 0,
+  successful_raids: parseInt(raw.successful_raid) || 0,
+  successful_tackles: parseInt(raw.successful_tackle) || 0,
+  super_raids: parseInt(raw.super_raid) || 0,
+  super_tackles: parseInt(raw.super_tackle) || 0,
+  do_or_die_points: parseInt(raw.dod_points) || 0,
+  empty_raids: parseInt(raw.empty_raid) || 0,
+  super_10s: parseInt(raw.super_10s) || 0,
+  super_5s: parseInt(raw.super_5s) || 0,
+  avg_raid_points: parseFloat(raw.avg_raid_points) || 0,
+  team_name: raw.team_name,
+  team_logo_url: raw.team_logo_url,
+  team_slug: raw.slug,
+});
 
 const PlayerDetails = () => {
-  const { slug } = useParams();
+  const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
   const passedTeamSlug = location.state?.teamSlug;
   const passedJersey = location.state?.jersey;
 
-  const [player, setPlayer] = useState(null);
-  const [stats, setStats] = useState(null);
-  const [seasons, setSeasons] = useState([]);
+  const [player, setPlayer] = useState<Player | null>(null);
+  const [stats, setStats] = useState<TransformedStats | null>(null);
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [teamHistory, setTeamHistory] = useState<TeamHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSeason, setSelectedSeason] = useState(null);
-  const [teamHistory, setTeamHistory] = useState([]);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+  // Fetch seasons, set latest as default
   useEffect(() => {
-    const fetchSeasons = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/seasons`);
-        const json = await res.json();
-        const seasonData = json?.data || [];
-        setSeasons(seasonData);
-        if (seasonData.length > 0 && !selectedSeason) {
-          setSelectedSeason(seasonData[0].id);
-        }
-      } catch (err) {
-        console.error("Error fetching seasons:", err);
-      }
-    };
-    fetchSeasons();
+    fetchSeasons().then((data) => {
+      setSeasons(data);
+      const latest = getLatestSeason(data);
+      if (latest) setSelectedSeason(latest.id);
+    });
   }, []);
 
+  // Fetch player + stats for selected season
   useEffect(() => {
-    if (!selectedSeason) return;
-    const fetchPlayerData = async () => {
-      try {
-        setLoading(true);
-        const playerRes = await fetch(`${API_BASE_URL}/players/${slug}`);
-        const playerJson = await playerRes.json();
-        const playerData = playerJson?.data;
+    if (!slug || !selectedSeason) return;
+    setLoading(true);
+    fetchPlayer(slug)
+      .then(async (playerData) => {
         setPlayer(playerData);
-
         if (playerData?.id) {
-          const statsRes = await fetch(
-            `${API_BASE_URL}/player-stats?season_id=${selectedSeason}&player_id=${playerData.id}`,
-          );
-          const statsJson = await statsRes.json();
-          const statsData = statsJson?.data?.[0];
-          if (statsData) {
-            setStats({
-              total_points: parseInt(statsData.total_points) || 0,
-              raid_points: parseInt(statsData.raid_points) || 0,
-              tackle_points: parseInt(statsData.tackle_points) || 0,
-              matches: parseInt(statsData.gameCount) || 0,
-              successful_raids: parseInt(statsData.successful_raid) || 0,
-              successful_tackles: parseInt(statsData.successful_tackle) || 0,
-              super_raids: parseInt(statsData.super_raid) || 0,
-              super_tackles: parseInt(statsData.super_tackle) || 0,
-              do_or_die_points: parseInt(statsData.dod_points) || 0,
-              empty_raids: parseInt(statsData.empty_raid) || 0,
-              super_10s: parseInt(statsData.super_10s) || 0,
-              super_5s: parseInt(statsData.super_5s) || 0,
-              avg_raid_points: parseFloat(statsData.avg_raid_points) || 0,
-              team_name: statsData.team_name,
-              team_logo_url: statsData.team_logo_url,
-              team_slug: statsData.slug,
-            });
-          } else {
-            setStats(null);
-          }
+          const raw = await fetchPlayerStats(playerData.id, selectedSeason);
+          setStats(raw ? transformStats(raw) : null);
         }
-      } catch (err) {
-        console.error("Error fetching player data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPlayerData();
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, [slug, selectedSeason]);
 
+  // Fetch career history across all seasons
   useEffect(() => {
     if (!player?.id || seasons.length === 0) return;
-    const fetchTeamHistory = async () => {
-      try {
-        const historyPromises = seasons.map(async (season) => {
-          const res = await fetch(
-            `${API_BASE_URL}/player-stats?season_id=${season.id}&player_id=${player.id}`,
-          );
-          const json = await res.json();
-          const data = json?.data?.[0];
-          if (data) {
-            return {
-              season_id: season.id,
-              season_name: season.name,
-              team_name: data.team_name,
-              team_logo_url: data.team_logo_url,
-              total_points: parseInt(data.total_points) || 0,
-              successful_raids: parseInt(data.successful_raid) || 0,
-              successful_tackles: parseInt(data.successful_tackle) || 0,
-            };
-          }
-          return null;
-        });
-        const history = await Promise.all(historyPromises);
-        setTeamHistory(history.filter(Boolean));
-      } catch (err) {
-        console.error("Error fetching team history:", err);
-      }
-    };
-    fetchTeamHistory();
-  }, [player, seasons]);
+    Promise.all(
+      seasons.map((season) =>
+        fetchPlayerStats(player.id, season.id).then((data) => {
+          if (!data) return null;
+          return {
+            season_id: season.id,
+            season_name: season.name,
+            team_name: data.team_name,
+            team_logo_url: data.team_logo_url,
+            total_points: parseInt(data.total_points) || 0,
+            successful_raids: parseInt(data.successful_raid) || 0,
+            successful_tackles: parseInt(data.successful_tackle) || 0,
+          } as TeamHistoryEntry;
+        }),
+      ),
+    ).then((results) =>
+      setTeamHistory(results.filter(Boolean) as TeamHistoryEntry[]),
+    );
+  }, [player?.id, seasons]);
 
   if (loading) {
     return (
@@ -166,8 +171,7 @@ const PlayerDetails = () => {
               to="/team"
               className="text-red-500 hover:text-red-400 font-medium flex items-center justify-center"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Teams
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Teams
             </Link>
           </div>
         </div>
@@ -203,7 +207,6 @@ const PlayerDetails = () => {
   return (
     <Layout>
       <div className="pt-24 pb-20 min-h-screen bg-slate-950 text-white font-sans relative overflow-hidden">
-        {/* ── Colorful ambient background glows ── */}
         <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/20 to-slate-950" />
           <div className="absolute -top-40 left-0 w-[600px] h-[600px] bg-red-600/20 blur-[180px] rounded-full opacity-50" />
@@ -212,7 +215,6 @@ const PlayerDetails = () => {
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          {/* Back Button */}
           <Link
             to={passedTeamSlug ? `/team/${passedTeamSlug}` : "/team"}
             className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors group"
@@ -227,7 +229,7 @@ const PlayerDetails = () => {
             </span>
           </Link>
 
-          {/* ── Hero Card ── */}
+          {/* Hero Card */}
           <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border border-white/10 mb-12 shadow-2xl">
             <div className="grid md:grid-cols-2 gap-0 relative z-10">
               {/* Image Side */}
@@ -239,12 +241,11 @@ const PlayerDetails = () => {
                   className="relative z-10 h-full w-full flex items-end justify-center"
                 >
                   <img
-                    src={player.player_image_url || player.photo}
+                    src={(player as any).player_image_url || player.photo}
                     alt={player.name}
                     className="h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.8)]"
                   />
                 </motion.div>
-
                 <div className="absolute inset-0 z-20 bg-gradient-to-r from-black/80 via-black/40 to-transparent pointer-events-none" />
                 <div className="absolute inset-0 z-20 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
 
@@ -255,13 +256,8 @@ const PlayerDetails = () => {
                     transition={{ duration: 1, delay: 0.6 }}
                     className="absolute top-8 left-8 z-30"
                   >
-                    <div className="relative">
-                      <div className="text-[140px] md:text-[180px] font-black text-white/3 leading-none select-none">
-                        {String(passedJersey).padStart(2, "0")}
-                      </div>
-                      <div className="absolute inset-0 text-[140px] md:text-[180px] font-black leading-none select-none bg-gradient-to-b from-red-600/10 to-transparent bg-clip-text text-transparent">
-                        {String(passedJersey).padStart(2, "0")}
-                      </div>
+                    <div className="text-[140px] md:text-[180px] font-black text-white/3 leading-none select-none">
+                      {String(passedJersey).padStart(2, "0")}
                     </div>
                   </motion.div>
                 )}
@@ -274,22 +270,19 @@ const PlayerDetails = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3, duration: 0.8 }}
                 >
-                  {/* Position Badge — original red/orange gradient */}
+                  {/* Position Badge */}
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
                     className="flex items-center gap-3 mb-6 flex-wrap"
                   >
-                    <span className="relative px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg shadow-red-900/30 overflow-hidden group">
-                      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                      <span className="relative">
-                        {player.position?.name || "Player"}
-                      </span>
+                    <span className="relative px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest bg-gradient-to-r from-red-600 to-orange-600 text-white shadow-lg shadow-red-900/30">
+                      {player.position?.name || "Player"}
                     </span>
                   </motion.div>
 
-                  {/* Player Name */}
+                  {/* Name */}
                   <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -337,7 +330,7 @@ const PlayerDetails = () => {
                     )}
                   </motion.div>
 
-                  {/* Season Selector — original red active style */}
+                  {/* Season Selector — defaults to latest */}
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -361,24 +354,13 @@ const PlayerDetails = () => {
                               : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/10 hover:border-white/20"
                           }`}
                         >
-                          {selectedSeason === season.id && (
-                            <motion.span
-                              layoutId="activeSeasonBg"
-                              className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700"
-                              transition={{
-                                type: "spring",
-                                bounce: 0.2,
-                                duration: 0.6,
-                              }}
-                            />
-                          )}
                           <span className="relative z-10">{season.name}</span>
                         </motion.button>
                       ))}
                     </div>
                   </motion.div>
 
-                  {/* Quick Stats Grid — original gradient colours */}
+                  {/* Quick Stats */}
                   {stats ? (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -447,7 +429,7 @@ const PlayerDetails = () => {
             </div>
           </div>
 
-          {/* ── Career Timeline ── */}
+          {/* Career Timeline */}
           {teamHistory.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -460,91 +442,80 @@ const PlayerDetails = () => {
                 Career Timeline
               </h2>
 
-              <div className="relative">
-                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-red-600 scrollbar-track-white/5 pb-4">
-                  <div className="flex gap-6 min-w-max">
-                    {teamHistory.map((item, index) => (
-                      <motion.div
-                        key={item.season_id}
-                        initial={{ opacity: 0, x: 50 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.1 }}
-                        className="flex-shrink-0 w-[350px]"
-                      >
-                        <div className="relative bg-zinc-900 border border-white/10 rounded-xl hover:border-red-500/50 transition-all group h-full overflow-hidden">
-                          <div className="absolute inset-0 flex items-center justify-center opacity-5 group-hover:opacity-10 transition-opacity">
-                            <img
-                              src={item.team_logo_url}
-                              alt={item.team_name}
-                              className="w-64 h-64 object-contain"
-                            />
-                          </div>
-                          <div className="relative z-10 p-6">
-                            <div className="mb-6 text-center">
-                              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
-                                {item.season_name}
-                              </span>
-                              <div className="w-24 h-24 mx-auto mb-3 bg-white/5 rounded-lg p-3 backdrop-blur-sm">
-                                <img
-                                  src={item.team_logo_url}
-                                  alt={item.team_name}
-                                  className="w-full h-full object-contain"
-                                />
-                              </div>
-                              <h3 className="text-xl font-bold text-white uppercase leading-tight">
-                                {item.team_name}
-                              </h3>
-                              <p className="text-slate-400 text-sm mt-1">
-                                {player.position?.name || "Player"}
-                              </p>
+              <div className="overflow-x-auto pb-4">
+                <div className="flex gap-6 min-w-max">
+                  {teamHistory.map((item, index) => (
+                    <motion.div
+                      key={item.season_id}
+                      initial={{ opacity: 0, x: 50 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex-shrink-0 w-[350px]"
+                    >
+                      <div className="relative bg-zinc-900 border border-white/10 rounded-xl hover:border-red-500/50 transition-all group h-full overflow-hidden">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-5 group-hover:opacity-10 transition-opacity">
+                          <img
+                            src={item.team_logo_url}
+                            alt={item.team_name}
+                            className="w-64 h-64 object-contain"
+                          />
+                        </div>
+                        <div className="relative z-10 p-6">
+                          <div className="mb-6 text-center">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                              {item.season_name}
+                            </span>
+                            <div className="w-24 h-24 mx-auto mb-3 bg-white/5 rounded-lg p-3 backdrop-blur-sm">
+                              <img
+                                src={item.team_logo_url}
+                                alt={item.team_name}
+                                className="w-full h-full object-contain"
+                              />
                             </div>
-                            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/10">
-                              <div className="text-center">
-                                <div className="text-2xl font-black text-red-500">
-                                  {item.total_points}
-                                </div>
-                                <div className="text-xs text-slate-500 uppercase font-bold">
-                                  Points
-                                </div>
+                            <h3 className="text-xl font-bold text-white uppercase leading-tight">
+                              {item.team_name}
+                            </h3>
+                            <p className="text-slate-400 text-sm mt-1">
+                              {player.position?.name || "Player"}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/10">
+                            <div className="text-center">
+                              <div className="text-2xl font-black text-red-500">
+                                {item.total_points}
                               </div>
-                              <div className="text-center">
-                                <div className="text-2xl font-black text-yellow-500">
-                                  {item.successful_raids}
-                                </div>
-                                <div className="text-xs text-slate-500 uppercase font-bold">
-                                  Raids
-                                </div>
+                              <div className="text-xs text-slate-500 uppercase font-bold">
+                                Points
                               </div>
-                              <div className="text-center">
-                                <div className="text-2xl font-black text-blue-500">
-                                  {item.successful_tackles}
-                                </div>
-                                <div className="text-xs text-slate-500 uppercase font-bold">
-                                  Tackles
-                                </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-black text-yellow-500">
+                                {item.successful_raids}
+                              </div>
+                              <div className="text-xs text-slate-500 uppercase font-bold">
+                                Raids
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-black text-blue-500">
+                                {item.successful_tackles}
+                              </div>
+                              <div className="text-xs text-slate-500 uppercase font-bold">
+                                Tackles
                               </div>
                             </div>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex justify-center mt-6 gap-2">
-                  {teamHistory.map((_, index) => (
-                    <div
-                      key={index}
-                      className="w-2 h-2 rounded-full bg-gradient-to-r from-red-500 to-blue-500"
-                    />
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>
             </motion.div>
           )}
 
-          {/* ── Detailed Stats & Charts ── */}
+          {/* Detailed Stats & Charts */}
           {stats && (
             <div className="grid lg:grid-cols-3 gap-8 mb-16">
               <motion.div

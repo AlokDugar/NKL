@@ -11,44 +11,24 @@ import {
 } from "lucide-react";
 import Layout from "../components/layout/Layout";
 import { Link } from "react-router-dom";
+import {
+  fetchMatches,
+  fetchSeasons,
+  getLatestSeason,
+  type Match,
+  type Season,
+} from "../api";
 
-/* ---------- Types ---------- */
-interface Team {
-  id: number;
-  name: string;
-  logo: string;
-}
-
-interface MatchDetails {
-  first_team_score?: number;
-  second_team_score?: number;
-  status?: number; // 1 = finished
-}
-
-interface Stadium {
-  name: string;
-}
-
-interface Match {
-  id: number;
-  type: string;
-  date: string;
-  season_id?: number;
-  first_team: Team;
-  second_team: Team;
-  details?: MatchDetails;
-  stadium?: Stadium;
-}
-
-interface Season {
-  id: number;
-  name: string;
-}
-
-/* ---------- Constants ---------- */
 const ITEMS_PER_PAGE = 6;
 
-/* ---------- Component ---------- */
+const getMatchStatus = (match: Match) => {
+  const s1 = Number(match.details?.first_team_score ?? 0);
+  const s2 = Number(match.details?.second_team_score ?? 0);
+  if (match.details?.status === 1) return "RECENT";
+  if (s1 !== 0 || s2 !== 0) return "LIVE";
+  return "UPCOMING";
+};
+
 const Matches = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -60,71 +40,47 @@ const Matches = () => {
   const [selectedSeason, setSelectedSeason] = useState("ALL");
   const [selectedTeam, setSelectedTeam] = useState("ALL");
   const [searchDate, setSearchDate] = useState("");
-
   const [currentPage, setCurrentPage] = useState(1);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-  /* ---------- Fetch ---------- */
   useEffect(() => {
-    Promise.all([
-      fetch(`${API_BASE_URL}/games`).then((r) => r.json()),
-      fetch(`${API_BASE_URL}/seasons`).then((r) => r.json()),
-    ])
-      .then(([gamesRes, seasonsRes]) => {
-        const sortedMatches = (gamesRes.data || []).sort(
-          (a: Match, b: Match) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime(),
+    Promise.all([fetchMatches(), fetchSeasons()])
+      .then(([matchData, seasonData]) => {
+        const sorted = [...matchData].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
         );
-
-        setMatches(sortedMatches);
-        setSeasons(seasonsRes.data || []);
+        setMatches(sorted);
+        setSeasons(seasonData);
+        // Default to latest season
+        const latest = getLatestSeason(seasonData);
+        if (latest) setSelectedSeason(latest.id.toString());
       })
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
-  /* ---------- Reset page on filter ---------- */
   useEffect(() => {
     setCurrentPage(1);
   }, [filterStatus, selectedSeason, selectedTeam, searchDate]);
 
-  /* ---------- Status helper ---------- */
-  const getMatchStatus = (match: Match) => {
-    const s1 = Number(match.details?.first_team_score ?? 0);
-    const s2 = Number(match.details?.second_team_score ?? 0);
-
-    if (match.details?.status === 1) return "RECENT";
-    if (s1 !== 0 || s2 !== 0) return "LIVE";
-    return "UPCOMING";
-  };
-
-  /* ---------- Filtering ---------- */
   const filteredMatches = matches.filter((match) => {
     const status = getMatchStatus(match);
-
     if (filterStatus !== "ALL" && status !== filterStatus) return false;
-
     if (
       selectedSeason !== "ALL" &&
       match.season_id?.toString() !== selectedSeason
     )
       return false;
-
     if (
       selectedTeam !== "ALL" &&
       match.first_team.id.toString() !== selectedTeam &&
       match.second_team.id.toString() !== selectedTeam
     )
       return false;
-
     if (searchDate && !match.date.includes(searchDate)) return false;
-
     return true;
   });
 
-  /* ---------- Pagination ---------- */
   const totalPages = Math.ceil(filteredMatches.length / ITEMS_PER_PAGE);
-
   const paginatedMatches = filteredMatches.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE,
@@ -137,15 +93,10 @@ const Matches = () => {
 
   const getPageNumbers = () => {
     const pages: (number | "...")[] = [];
-
-    if (totalPages <= 7) {
+    if (totalPages <= 7)
       return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
     pages.push(1);
-
     if (currentPage > 3) pages.push("...");
-
     for (
       let i = Math.max(2, currentPage - 1);
       i <= Math.min(totalPages - 1, currentPage + 1);
@@ -153,20 +104,25 @@ const Matches = () => {
     ) {
       pages.push(i);
     }
-
     if (currentPage < totalPages - 2) pages.push("...");
-
     pages.push(totalPages);
-
     return pages;
   };
 
-  /* ---------- Render ---------- */
+  // Unique teams for the filter dropdown
+  const uniqueTeams = [
+    ...new Map(
+      matches.flatMap((m) => [
+        [m.first_team.id, m.first_team],
+        [m.second_team.id, m.second_team],
+      ]),
+    ).values(),
+  ];
+
   return (
     <Layout>
       <div className="pt-24 pb-20 min-h-screen bg-slate-950 text-white">
         <div className="container mx-auto px-4">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -180,7 +136,7 @@ const Matches = () => {
             <div className="h-1 w-24 mx-auto bg-gradient-to-r from-red-500 to-blue-500 -skew-x-12" />
           </motion.div>
 
-          {/* Filters */}
+          {/* Status filter tabs */}
           <div className="max-w-4xl mx-auto mb-8 space-y-4">
             <div className="flex justify-center gap-4 border-b border-white/10 pb-4">
               {(["ALL", "LIVE", "UPCOMING", "RECENT"] as const).map(
@@ -206,7 +162,7 @@ const Matches = () => {
               </div>
 
               <div className="flex flex-wrap gap-4 flex-1 justify-end">
-                {/* Season */}
+                {/* Season — defaults to latest */}
                 <select
                   value={selectedSeason}
                   onChange={(e) => setSelectedSeason(e.target.value)}
@@ -227,14 +183,7 @@ const Matches = () => {
                   className="bg-black border border-white/10 rounded px-3 py-2 text-sm font-bold text-white focus:outline-none focus:border-red-500"
                 >
                   <option value="ALL">All Teams</option>
-                  {[
-                    ...new Map(
-                      matches.flatMap((m) => [
-                        [m.first_team.id, m.first_team],
-                        [m.second_team.id, m.second_team],
-                      ]),
-                    ).values(),
-                  ].map((team) => (
+                  {uniqueTeams.map((team) => (
                     <option key={team.id} value={team.id}>
                       {team.name}
                     </option>
@@ -306,7 +255,6 @@ const Matches = () => {
 
                       <div className="p-8 flex items-center justify-between">
                         <TeamBlock team={match.first_team} align="right" />
-
                         <div className="text-center">
                           <div className="text-4xl font-black flex gap-4">
                             <span>{s1}</span>
@@ -318,7 +266,6 @@ const Matches = () => {
                             {match.stadium?.name || "TBD"}
                           </div>
                         </div>
-
                         <TeamBlock team={match.second_team} align="left" />
                       </div>
 
@@ -379,21 +326,18 @@ const Matches = () => {
   );
 };
 
-/* ---------- Team UI ---------- */
 const TeamBlock = ({
   team,
   align,
 }: {
-  team: Team;
+  team: { name: string; logo: string };
   align: "left" | "right";
 }) => (
   <div className="flex-1 flex flex-col items-center">
     <img
       src={team.logo}
       alt={team.name}
-      className={`w-20 h-20 object-contain mb-3 ${
-        align === "left" ? "md:mr-6" : "md:ml-6"
-      }`}
+      className={`w-20 h-20 object-contain mb-3 ${align === "left" ? "md:mr-6" : "md:ml-6"}`}
     />
     <h3 className="text-xl font-bold uppercase text-center">{team.name}</h3>
   </div>
