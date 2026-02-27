@@ -197,15 +197,34 @@ export async function fetchSeasons(): Promise<Season[]> {
   return res.data || [];
 }
 
-/** Fetch all teams. */
-export async function fetchTeams(): Promise<Team[]> {
-  const res = await get<{ data: Team[] }>("/teams");
+/** Fetch all teams. Defaults to latest season if seasonId not provided. */
+export async function fetchTeams(seasonId?: number): Promise<Team[]> {
+  if (!seasonId) {
+    const seasons = await fetchSeasons();
+    const latest = getLatestSeason(seasons);
+    seasonId = latest?.id;
+  }
+  const path = seasonId ? `/teams?season_id=${seasonId}` : "/teams";
+  const res = await get<{ data: Team[] }>(path);
   return res.data || [];
 }
 
-/** Fetch a single team by slug. */
-export async function fetchTeam(slug: string): Promise<Team> {
-  const res = await get<{ data: Team }>(`/teams/${slug}`);
+/** Fetch a single team by slug. Defaults to latest season if seasonId not provided. */
+export async function fetchTeam(
+  slug: string,
+  seasonId?: number,
+): Promise<Team> {
+  if (!seasonId) {
+    const seasons = await fetchSeasons();
+    const latest = getLatestSeason(seasons);
+    seasonId = latest?.id;
+  }
+
+  const path = seasonId
+    ? `/teams/${slug}?season_id=${seasonId}`
+    : `/teams/${slug}`;
+
+  const res = await get<{ data: Team }>(path);
   return res.data;
 }
 
@@ -244,7 +263,6 @@ export async function fetchStandings(seasonId?: number): Promise<StandingTeam[]>
 
 /**
  * Fetch standings for the LATEST season automatically.
- * Returns both the standings and the resolved latest season.
  */
 export async function fetchLatestStandings(): Promise<{
   standings: StandingTeam[];
@@ -256,6 +274,7 @@ export async function fetchLatestStandings(): Promise<{
   return { standings, season: latest };
 }
 
+/** Fetch squad players for a team & season. */
 export async function fetchSquad(
   teamSlug: string,
   seasonId: number,
@@ -318,4 +337,15 @@ export async function fetchNews(): Promise<NewsItem[]> {
     (a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
+}
+
+/** Optional helper: fetch teams for the latest season explicitly */
+export async function fetchLatestSeasonTeams(): Promise<{
+  teams: Team[];
+  season: Season | undefined;
+}> {
+  const seasons = await fetchSeasons();
+  const latest = getLatestSeason(seasons);
+  const teams = await fetchTeams(latest?.id);
+  return { teams, season: latest };
 }
